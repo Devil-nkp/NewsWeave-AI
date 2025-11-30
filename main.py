@@ -21,7 +21,7 @@ import plotly.utils
 
 # --- SYSTEM CONFIGURATION ---
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("NewsWeave-Infinity")
+logger = logging.getLogger("NewsWeave-Singularity")
 
 INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY")
 
@@ -57,65 +57,69 @@ class SearchRequest(BaseModel):
     mode: str
 
 # ==========================================
-# 🧠 INFINITY INTELLIGENCE AGENT (v12)
+#  SINGULARITY INTELLIGENCE AGENT (v13)
 # ==========================================
 
-class InfinityAgent:
+class SingularityAgent:
     def __init__(self):
-        # Temperature 0.0 for absolute robotic precision (No hallucinations)
+        # Temperature 0.0 for robotic factual precision
         self.llm = ChatGroq(temperature=0.0, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY)
         self.date_str = datetime.now().strftime("%B %d, %Y")
 
     def _determine_mode(self, topic):
         t = topic.lower()
         # CATALOG MODE: Detects requests for lists, types, or collections
-        if any(x in t for x in ['all', 'list', 'types of', 'top 10', 'every', 'catalog', 'classification']):
+        if any(x in t for x in ['all', 'list', 'types of', 'top 10', 'top 20', 'top 50', 'every', 'catalog', 'classification', 'examples']):
             return "Catalog"
         # MARKET MODE: Detects financial intent
-        if any(x in t for x in ['stock', 'price', 'market', 'growth', 'economy', 'cost', 'revenue']):
+        if any(x in t for x in ['stock', 'price', 'market', 'growth', 'economy', 'cost', 'revenue', 'finance']):
             return "Market Analysis"
         # TRUTH MODE: Detects skepticism
-        if any(x in t for x in ['fake', 'real', 'true', 'hoax', 'scam', 'fact', 'verify', 'rumor']):
+        if any(x in t for x in ['fake', 'real', 'true', 'hoax', 'scam', 'fact', 'verify', 'rumor', 'debunk']):
             return "Fact Check"
         return "Deep Research"
 
     def _smart_image_sweep(self, topic, region_code):
         """
-        DEEP VISUAL SWEEP: Ensures 20-50 REAL images.
-        Iterates through multiple semantic queries to build a massive gallery.
+        VISUAL TRAWL ENGINE: Aggressively hunts for 20-50 REAL images.
+        Uses domain-specific context injection.
         """
-        # 1. Determine Field Context for better images
-        field_context = "news"
-        if "medic" in topic.lower(): field_context = "medical device"
-        elif "tech" in topic.lower(): field_context = "technology product"
-        elif "space" in topic.lower(): field_context = "spacecraft launch"
+        # 1. Determine Context for better search
+        context_keyword = "news"
+        t_lower = topic.lower()
+        if "crime" in t_lower: context_keyword = "police investigation scene"
+        elif "tech" in t_lower: context_keyword = "product demonstration"
+        elif "medic" in t_lower: context_keyword = "medical device"
+        elif "space" in t_lower: context_keyword = "launch pad"
+        elif "war" in t_lower: context_keyword = "conflict zone journalism"
         
-        # 2. Multi-Vector Image Queries
+        # 2. Multi-Vector Visual Queries
         queries = [
-            f"{topic} {field_context} photo",
-            f"{topic} real life",
-            f"{topic} event photography",
+            f"{topic} {context_keyword} photo",
+            f"{topic} real life photography",
+            f"{topic} official event",
             f"{topic} press conference",
-            f"{topic} official photo"
+            f"{topic} close up photo"
         ]
         
         gallery = []
         seen_urls = set()
         
-        # 3. Strict Anti-AI Blacklist
+        # 3. Strict Anti-AI / Anti-Cartoon Firewall
         blacklist = [
             "ai generated", "midjourney", "dall-e", "stable diffusion", "render", "concept art", 
-            "illustration", "vector", "cartoon", "drawing", "clipart", "logo", "icon", "fantasy", "3d model"
+            "illustration", "vector", "cartoon", "drawing", "clipart", "logo", "icon", "fantasy", "3d model", "anime"
         ]
 
-        print(f"📸 Starting Deep Visual Sweep for: {topic}")
+        print(f"📸 Starting Visual Trawl for: {topic}")
 
         try:
             with DDGS() as ddgs:
                 for q in queries:
-                    if len(gallery) >= 50: break # Hard cap
+                    if len(gallery) >= 50: break # Cap at 50
                     
                     try:
+                        # Fetch large batch
                         results = list(ddgs.images(q, region=region_code, max_results=30))
                         for r in results:
                             if len(gallery) >= 50: break
@@ -123,65 +127,77 @@ class InfinityAgent:
                             title = r.get('title', '').lower()
                             src = r.get('image', '')
                             
-                            # Deduplication & Quality Filter
+                            # Deduplication
                             if src in seen_urls: continue
+                            # Content Filter
                             if any(b in title for b in blacklist): continue
                             
-                            # Valid Image Found
                             gallery.append({"src": src, "title": r['title']})
                             seen_urls.add(src)
-                    except:
+                    except Exception as img_err:
+                        logger.warning(f"Image batch failed: {img_err}")
                         continue
                     
-                    time.sleep(0.2) # Polite delay
+                    time.sleep(0.2) # Anti-rate-limit pause
         except Exception as e:
-            logger.error(f"Image Sweep Error: {e}")
+            logger.error(f"Image Sweep Critical Error: {e}")
             
-        # If we still have few images, fallback to generic search
+        # Fallback: If < 10 images, try a very broad search
         if len(gallery) < 10:
             try:
                 with DDGS() as ddgs:
-                    results = list(ddgs.images(topic, region=region_code, max_results=20))
+                    results = list(ddgs.images(topic, region=region_code, max_results=25))
                     for r in results:
-                        if len(gallery) >= 20: break
-                        gallery.append({"src": r['image'], "title": r['title']})
+                        if len(gallery) >= 25: break
+                        if r['image'] not in seen_urls:
+                            gallery.append({"src": r['image'], "title": r['title']})
+                            seen_urls.add(r['image'])
             except: pass
             
         return gallery
 
     def _execute_polymorphic_search(self, topic, region, mode):
         """
-        Rotates through 4 search backends to guarantee data retrieval.
+        Rotates through 4 search backends + Conflict Resolution Vector.
         """
         region_code = REGION_MAP.get(region, "wt-wt")
         active_mode = self._determine_mode(topic) if mode == "Auto" else mode
         
-        # Strategy Generation
         strategies = []
         if active_mode == "Catalog":
-            strategies = [f"list of all {topic}", f"types of {topic} comprehensive", f"full list {topic} details"]
+            strategies = [
+                f"list of all {topic}", 
+                f"comprehensive list {topic}", 
+                f"types of {topic} with description",
+                f"full classification {topic}"
+            ]
         elif active_mode == "Fact Check":
-            strategies = [f"{topic} official fact check", f"is {topic} true"]
+            strategies = [f"{topic} official fact check", f"is {topic} true", f"{topic} hoax debunked"]
         elif active_mode == "Market Analysis":
-            strategies = [f"{topic} statistics {datetime.now().year}", f"{topic} financial report"]
+            strategies = [f"{topic} statistics {datetime.now().year}", f"{topic} market report", f"{topic} revenue data"]
         else:
-            strategies = [f"{topic} comprehensive analysis", f"{topic} controversy", f"{topic} timeline"]
+            # Deep Research: Includes Conflict Vector
+            strategies = [
+                f"{topic} comprehensive analysis", 
+                f"{topic} controversy and criticism", # Finds conflicts
+                f"{topic} timeline of events",
+                f"{topic} official data"
+            ]
 
         vault = ""
         
         try:
             with DDGS() as ddgs:
                 for query in strategies:
-                    # 1. News Backend (Best for current events)
+                    # 1. News Backend
                     try:
                         news = list(ddgs.news(query, region=region_code, max_results=5))
                         for r in news:
                             vault += f"SOURCE: {r['title']} ({r['date']})\nLINK: {r['url']}\nINFO: {r['body']}\n\n"
                     except: pass
 
-                    # 2. Text Backend (Best for catalogs/lists)
-                    # We fetch MORE results in Catalog mode to ensure we catch "All" items
-                    limit = 10 if active_mode == "Catalog" else 4
+                    # 2. Text Backend (High Volume for Catalogs)
+                    limit = 15 if active_mode == "Catalog" else 5
                     try:
                         text = list(ddgs.text(query, region=region_code, backend="lite", max_results=limit))
                         for r in text:
@@ -194,33 +210,31 @@ class InfinityAgent:
 
     def _generate_chart(self, report_text):
         """
-        Parses the report text for numbers/dates and auto-generates a Plotly chart.
+        Robust Chart Generator with statsmodels support.
         """
-        # Extract years and numbers
-        years = re.findall(r'\b(20\d{2})\b', report_text)
-        numbers = re.findall(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\b', report_text)
-        
-        chart_json = None
-        
-        if len(years) > 2 and len(numbers) > 2:
-            # Create Timeline Scatter Plot
-            clean_years = []
-            clean_nums = []
-            for i in range(min(len(years), len(numbers))):
-                try:
-                    y = int(years[i])
-                    v = float(numbers[i].replace(',', ''))
-                    clean_years.append(y)
-                    clean_nums.append(v)
-                except: pass
+        try:
+            years = re.findall(r'\b(20\d{2})\b', report_text)
+            numbers = re.findall(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\b', report_text)
             
-            if clean_years:
-                df = pd.DataFrame({"Year": clean_years, "Value": clean_nums})
-                fig = px.scatter(df, x="Year", y="Value", title="Data Trend Analysis", 
-                                 trendline="ols" if len(df) > 3 else None, template="plotly_dark")
-                chart_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        
-        return chart_json
+            if len(years) > 2 and len(numbers) > 2:
+                clean_years, clean_nums = [], []
+                for i in range(min(len(years), len(numbers))):
+                    try:
+                        y = int(years[i])
+                        v = float(numbers[i].replace(',', ''))
+                        clean_years.append(y)
+                        clean_nums.append(v)
+                    except: pass
+                
+                if clean_years:
+                    df = pd.DataFrame({"Year": clean_years, "Value": clean_nums})
+                    # Trendline enabled (requires statsmodels)
+                    fig = px.scatter(df, x="Year", y="Value", title="Data Trend Analysis", 
+                                     trendline="ols" if len(df) > 3 else None, template="plotly_dark")
+                    return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        except Exception as e:
+            logger.error(f"Chart Error: {e}")
+        return None
 
     def generate_report(self, topic, region, mode):
         # 1. GATHER
@@ -231,48 +245,53 @@ class InfinityAgent:
             try:
                 context = f"WIKIPEDIA: {wikipedia.summary(topic, sentences=10)}"
             except:
-                return "⚠️ Mission Failed: No verifiable data found.", [], None
+                return " Mission Failed: No verifiable data found.", [], None
 
         # 3. PROMPT ENGINEERING (THE BRAIN)
-        # Specific instructions for "Catalog" mode to ensure "All" items are listed
         structure_instruction = ""
+        
         if resolved_mode == "Catalog":
             structure_instruction = """
-            **CATALOG MODE:**
-            - Your task is to list **EVERY** single entity/type found in the data.
-            - Structure as a bulleted list.
-            - Format: <b>Name:</b> One concise line of explanation.
-            - Do not summarize "some examples". List ALL of them.
+            **CATALOG MODE ACTIVATED:**
+            - You MUST generate an **EXHAUSTIVE LIST** of items.
+            - Do not group them into paragraphs. Use Bullet Points.
+            - **Format:** <b>Item Name:</b> One concise sentence explaining it.
+            - If the user asked for "All", list as many as found in the data (up to 50).
+            - Do not omit items.
             """
+        elif resolved_mode == "Fact Check":
+             structure_instruction = """
+             - <h3>Truth Verdict</h3> (Verified/Debunked)
+             - <h3>Reality Check</h3> (What actually happened)
+             - <h3>Evidence Audit</h3>
+             """
         else:
             structure_instruction = """
             - <h3>Executive Verdict</h3>
-            - <h3>Deep Dive Analysis</h3>
-            - <h3>Key Evidence</h3> (Bullet points with specific numbers/dates)
+            - <h3>Deep Dive Analysis</h3> (Include Conflict Analysis: Side A vs Side B)
+            - <h3>Key Evidence</h3> (Bullet points with numbers)
             - <h3>Strategic Outlook</h3>
             """
 
         prompt = f"""
-        You are NewsWeave Infinity.
-        TOPIC: {topic}
-        MODE: {resolved_mode}
-        DATE: {self.date_str}
-        REGION: {region}
+        You are NewsWeave Singularity. 
+        TOPIC: {topic} | MODE: {resolved_mode}
+        DATE: {self.date_str} | REGION: {region}
         
         INTELLIGENCE VAULT:
         {context}
         
         INSTRUCTIONS:
         1. {structure_instruction}
-        2. **Citations:** <a href='URL' target='_blank'>[Source]</a>.
+        2. **Citations:** <a href='URL' target='_blank' style='color:#00c6ff'>[Source]</a>.
         3. **No Hallucinations:** Verify facts against the vault. If data is missing, say "Data unavailable".
-        4. **HTML Format:** Use <h3>, <p>, <ul>, <li>.
+        4. **Conflict Handling:** If sources disagree, state "Conflict Detected: Source A says X, while Source B says Y".
         """
         
         try:
             report = self.llm.invoke(prompt).content
-        except:
-            report = "AI Generation Error."
+        except Exception as e:
+            report = f"<p style='color:red'>Error generating report: {str(e)}</p>"
 
         # 4. VISUALS & CHARTS
         images = self._smart_image_sweep(topic, region_code)
@@ -280,10 +299,10 @@ class InfinityAgent:
         
         return report, images, chart
 
-agent = InfinityAgent()
+agent = SingularityAgent()
 
 # ==========================================
-# 🌐 API ROUTES
+#  API ROUTES
 # ==========================================
 
 @app.get("/")
@@ -302,4 +321,3 @@ async def analyze_endpoint(request: SearchRequest):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
