@@ -9,5 +9,5 @@ plotly
 pandas
 wikipedia
 requests
-pydantic
 scikit-learn
+pydantic
