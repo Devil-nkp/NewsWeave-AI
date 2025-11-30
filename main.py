@@ -1,6 +1,9 @@
 import os
 import uvicorn
 import re
+import time
+import random
+import json
 import logging
 from datetime import datetime
 from fastapi import FastAPI, Request
@@ -11,22 +14,22 @@ from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from duckduckgo_search import DDGS 
 import wikipedia
+from textblob import TextBlob
+import pandas as pd
+import plotly.express as px
+import plotly.utils
 
 # --- SYSTEM CONFIGURATION ---
-# Configure logging to track the agent's "thoughts"
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("NewsWeave-Brain")
+logger = logging.getLogger("NewsWeave-Infinity")
 
-# API Key Strategy: Prioritize Environment Variable, fallback to hardcoded for testing
-INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY")
+INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 
 app = FastAPI()
-
-# Mount static folder (for background video) and templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# --- GLOBAL REGION MAPPING (50+ Countries) ---
+# --- GLOBAL REGION MAP (50+ Nations) ---
 REGION_MAP = {
     "Global": "wt-wt", "USA": "us-en", "India": "in-en", "UK": "uk-en",
     "Argentina": "ar-es", "Australia": "au-en", "Austria": "at-de",
@@ -48,188 +51,236 @@ REGION_MAP = {
     "Ukraine": "ua-uk", "Vietnam": "vn-vi"
 }
 
-# Input Data Model
 class SearchRequest(BaseModel):
     topic: str
     region: str
     mode: str
 
 # ==========================================
-# 🧠 OMNI-PRO AGENT v10 (THE CORE)
+# 🧠 INFINITY INTELLIGENCE AGENT (v12)
 # ==========================================
 
-class OmniProAgent:
+class InfinityAgent:
     def __init__(self):
-        # Temperature 0.1 ensures high factual accuracy and low hallucination
-        self.llm = ChatGroq(temperature=0.1, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY)
+        # Temperature 0.0 for absolute robotic precision (No hallucinations)
+        self.llm = ChatGroq(temperature=0.0, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY)
         self.date_str = datetime.now().strftime("%B %d, %Y")
 
-    def _determine_auto_mode(self, topic):
-        """
-        Cognitive Router: Analyzes the topic semantics to pick the best mode.
-        """
+    def _determine_mode(self, topic):
         t = topic.lower()
-        if any(x in t for x in ['stock', 'price', 'market', 'growth', 'economy', 'cost', 'revenue', 'gdp']):
+        # CATALOG MODE: Detects requests for lists, types, or collections
+        if any(x in t for x in ['all', 'list', 'types of', 'top 10', 'every', 'catalog', 'classification']):
+            return "Catalog"
+        # MARKET MODE: Detects financial intent
+        if any(x in t for x in ['stock', 'price', 'market', 'growth', 'economy', 'cost', 'revenue']):
             return "Market Analysis"
-        if any(x in t for x in ['fake', 'real', 'true', 'hoax', 'scam', 'fact', 'rumor', 'verify']):
+        # TRUTH MODE: Detects skepticism
+        if any(x in t for x in ['fake', 'real', 'true', 'hoax', 'scam', 'fact', 'verify', 'rumor']):
             return "Fact Check"
         return "Deep Research"
 
-    def _get_search_strategy(self, topic, mode):
+    def _smart_image_sweep(self, topic, region_code):
         """
-        Strategy Generator: Creates specific search queries based on intent.
+        DEEP VISUAL SWEEP: Ensures 20-50 REAL images.
+        Iterates through multiple semantic queries to build a massive gallery.
         """
-        active_mode = self._determine_auto_mode(topic) if mode == "Auto" else mode
-        logger.info(f"🧠 Mode Resolved: {active_mode}")
-
-        strategies = []
-        if active_mode == "Fact Check":
-            strategies = [
-                f"is {topic} true or false", 
-                f"{topic} official fact check", 
-                f"{topic} hoax debunked details"
-            ]
-        elif active_mode == "Market Analysis":
-            strategies = [
-                f"{topic} market statistics {datetime.now().year}", 
-                f"{topic} financial report analysis", 
-                f"{topic} growth trend data"
-            ]
-        elif active_mode == "Fast":
-            strategies = [f"{topic} latest summary news"]
-        else: # Deep Research
-            strategies = [
-                f"{topic} comprehensive analysis", 
-                f"{topic} controversy and criticism", 
-                f"{topic} timeline of events"
-            ]
-            
-        return strategies, active_mode
-
-    def _smart_image_search(self, topic, region_code):
-        """
-        Visual Intelligence: Fetches only high-quality, relevant journalistic images.
-        Filters out cartoons, vectors, and AI-generated spam.
-        """
-        search_query = f"{topic} news event photo real"
+        # 1. Determine Field Context for better images
+        field_context = "news"
+        if "medic" in topic.lower(): field_context = "medical device"
+        elif "tech" in topic.lower(): field_context = "technology product"
+        elif "space" in topic.lower(): field_context = "spacecraft launch"
+        
+        # 2. Multi-Vector Image Queries
+        queries = [
+            f"{topic} {field_context} photo",
+            f"{topic} real life",
+            f"{topic} event photography",
+            f"{topic} press conference",
+            f"{topic} official photo"
+        ]
+        
         gallery = []
         seen_urls = set()
         
+        # 3. Strict Anti-AI Blacklist
+        blacklist = [
+            "ai generated", "midjourney", "dall-e", "stable diffusion", "render", "concept art", 
+            "illustration", "vector", "cartoon", "drawing", "clipart", "logo", "icon", "fantasy", "3d model"
+        ]
+
+        print(f"📸 Starting Deep Visual Sweep for: {topic}")
+
         try:
             with DDGS() as ddgs:
-                # Fetch 15 to have a buffer for filtering
-                results = list(ddgs.images(search_query, region=region_code, max_results=15))
-                
-                for r in results:
-                    title = r.get('title', '').lower()
-                    src = r.get('image', '')
+                for q in queries:
+                    if len(gallery) >= 50: break # Hard cap
                     
-                    # --- QUALITY FILTERS ---
-                    if src in seen_urls: continue
-                    if any(x in title for x in ["cartoon", "vector", "clipart", "icon", "logo", "ai generated"]): 
+                    try:
+                        results = list(ddgs.images(q, region=region_code, max_results=30))
+                        for r in results:
+                            if len(gallery) >= 50: break
+                            
+                            title = r.get('title', '').lower()
+                            src = r.get('image', '')
+                            
+                            # Deduplication & Quality Filter
+                            if src in seen_urls: continue
+                            if any(b in title for b in blacklist): continue
+                            
+                            # Valid Image Found
+                            gallery.append({"src": src, "title": r['title']})
+                            seen_urls.add(src)
+                    except:
                         continue
                     
-                    gallery.append({"src": src, "title": r['title']})
-                    seen_urls.add(src)
-                    
-                    if len(gallery) >= 4: break # We only need 4 high-quality images
+                    time.sleep(0.2) # Polite delay
         except Exception as e:
-            logger.error(f"Image Search Error: {e}")
+            logger.error(f"Image Sweep Error: {e}")
+            
+        # If we still have few images, fallback to generic search
+        if len(gallery) < 10:
+            try:
+                with DDGS() as ddgs:
+                    results = list(ddgs.images(topic, region=region_code, max_results=20))
+                    for r in results:
+                        if len(gallery) >= 20: break
+                        gallery.append({"src": r['image'], "title": r['title']})
+            except: pass
             
         return gallery
 
-    def _execute_mission_search(self, topic, region, mode):
+    def _execute_polymorphic_search(self, topic, region, mode):
         """
-        Polymorphic Search Engine: Tries multiple backends to avoid blocking.
+        Rotates through 4 search backends to guarantee data retrieval.
         """
-        vault = ""
         region_code = REGION_MAP.get(region, "wt-wt")
-        strategies, resolved_mode = self._get_search_strategy(topic, mode)
+        active_mode = self._determine_mode(topic) if mode == "Auto" else mode
         
-        print(f"🕵️ Executing Search Strategies in {region} ({region_code})...")
+        # Strategy Generation
+        strategies = []
+        if active_mode == "Catalog":
+            strategies = [f"list of all {topic}", f"types of {topic} comprehensive", f"full list {topic} details"]
+        elif active_mode == "Fact Check":
+            strategies = [f"{topic} official fact check", f"is {topic} true"]
+        elif active_mode == "Market Analysis":
+            strategies = [f"{topic} statistics {datetime.now().year}", f"{topic} financial report"]
+        else:
+            strategies = [f"{topic} comprehensive analysis", f"{topic} controversy", f"{topic} timeline"]
 
+        vault = ""
+        
         try:
             with DDGS() as ddgs:
                 for query in strategies:
-                    results = []
-                    # 1. Try News Backend
+                    # 1. News Backend (Best for current events)
                     try:
-                        results = list(ddgs.news(query, region=region_code, max_results=4))
-                    except:
-                        # 2. Fallback to Text Backend (Lite)
-                        try:
-                            results = list(ddgs.text(query, region=region_code, backend="lite", max_results=4))
-                        except: pass
+                        news = list(ddgs.news(query, region=region_code, max_results=5))
+                        for r in news:
+                            vault += f"SOURCE: {r['title']} ({r['date']})\nLINK: {r['url']}\nINFO: {r['body']}\n\n"
+                    except: pass
 
-                    # Accumulate Evidence
-                    for r in results:
-                        title = r.get('title', 'Source')
-                        link = r.get('url', r.get('href', '#'))
-                        body = r.get('body', r.get('snippet', ''))
-                        date = r.get('date', 'Recent')
-                        
-                        vault += f"SOURCE: {title} ({date})\nLINK: {link}\nEVIDENCE: {body}\n\n"
+                    # 2. Text Backend (Best for catalogs/lists)
+                    # We fetch MORE results in Catalog mode to ensure we catch "All" items
+                    limit = 10 if active_mode == "Catalog" else 4
+                    try:
+                        text = list(ddgs.text(query, region=region_code, backend="lite", max_results=limit))
+                        for r in text:
+                            vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nINFO: {r['body']}\n\n"
+                    except: pass
         except Exception as e:
-            logger.error(f"Critical Search Failure: {e}")
+            logger.error(f"Search Error: {e}")
 
-        return vault, resolved_mode, region_code
+        return vault, active_mode, region_code
+
+    def _generate_chart(self, report_text):
+        """
+        Parses the report text for numbers/dates and auto-generates a Plotly chart.
+        """
+        # Extract years and numbers
+        years = re.findall(r'\b(20\d{2})\b', report_text)
+        numbers = re.findall(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\b', report_text)
+        
+        chart_json = None
+        
+        if len(years) > 2 and len(numbers) > 2:
+            # Create Timeline Scatter Plot
+            clean_years = []
+            clean_nums = []
+            for i in range(min(len(years), len(numbers))):
+                try:
+                    y = int(years[i])
+                    v = float(numbers[i].replace(',', ''))
+                    clean_years.append(y)
+                    clean_nums.append(v)
+                except: pass
+            
+            if clean_years:
+                df = pd.DataFrame({"Year": clean_years, "Value": clean_nums})
+                fig = px.scatter(df, x="Year", y="Value", title="Data Trend Analysis", 
+                                 trendline="ols" if len(df) > 3 else None, template="plotly_dark")
+                chart_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
+        return chart_json
 
     def generate_report(self, topic, region, mode):
-        # 1. GATHER INTELLIGENCE
-        context, resolved_mode, region_code = self._execute_mission_search(topic, region, mode)
+        # 1. GATHER
+        context, resolved_mode, region_code = self._execute_polymorphic_search(topic, region, mode)
         
-        # 2. FALLBACK PROTOCOL (WIKIPEDIA)
-        if not context or len(context) < 100:
+        # 2. FALLBACK
+        if not context:
             try:
-                context = f"WIKIPEDIA SUMMARY: {wikipedia.summary(topic, sentences=6)}"
+                context = f"WIKIPEDIA: {wikipedia.summary(topic, sentences=10)}"
             except:
-                return "⚠️ Mission Failed: No verifiable data found on this topic. Try a more specific query.", []
+                return "⚠️ Mission Failed: No verifiable data found.", [], None
 
-        # 3. SYNTHESIZE INTELLIGENCE (THE BRAIN)
-        # Dynamic prompt injection based on mode
-        mode_instruction = "Your goal is COMPREHENSIVE INTELLIGENCE."
-        if resolved_mode == "Fact Check":
-            mode_instruction = "Your goal is VERIFICATION. Explicitly confirm or debunk the topic based on evidence."
-        elif resolved_mode == "Market Analysis":
-            mode_instruction = "Your goal is DATA. Focus on financial numbers, stock trends, and economic impact."
-        
+        # 3. PROMPT ENGINEERING (THE BRAIN)
+        # Specific instructions for "Catalog" mode to ensure "All" items are listed
+        structure_instruction = ""
+        if resolved_mode == "Catalog":
+            structure_instruction = """
+            **CATALOG MODE:**
+            - Your task is to list **EVERY** single entity/type found in the data.
+            - Structure as a bulleted list.
+            - Format: <b>Name:</b> One concise line of explanation.
+            - Do not summarize "some examples". List ALL of them.
+            """
+        else:
+            structure_instruction = """
+            - <h3>Executive Verdict</h3>
+            - <h3>Deep Dive Analysis</h3>
+            - <h3>Key Evidence</h3> (Bullet points with specific numbers/dates)
+            - <h3>Strategic Outlook</h3>
+            """
+
         prompt = f"""
-        You are NewsWeave Omni-Pro (v10).
+        You are NewsWeave Infinity.
+        TOPIC: {topic}
+        MODE: {resolved_mode}
+        DATE: {self.date_str}
+        REGION: {region}
         
-        MISSION PARAMETERS:
-        - Topic: {topic}
-        - Current Date: {self.date_str}
-        - Region Focus: {region}
-        - Active Mode: {resolved_mode}
-        
-        INTELLIGENCE VAULT (RAW DATA):
+        INTELLIGENCE VAULT:
         {context}
         
-        MANDATORY DIRECTIVES:
-        1. {mode_instruction}
-        2. **Citation Rule:** Every single claim must be backed by a source from the Vault. Format: <a href='URL' target='_blank' style='color:#007bff; text-decoration:none;'>[Source Name]</a>.
-        3. **Formatting:** Use HTML tags strictly (<h3> for headers, <p> for text, <ul>/<li> for lists, <strong> for emphasis).
-        4. **Tone:** Professional, Forensic, Objective.
-        
-        REQUIRED REPORT STRUCTURE:
-        - <h3>Executive Verdict</h3> (A concise summary of the reality)
-        - <h3>Deep Dive Analysis</h3> (Detailed synthesis of the gathered intelligence)
-        - <h3>Key Evidence</h3> (Bullet points containing specific numbers, dates, or quotes)
-        - <h3>Strategic Outlook</h3> (What happens next? Future implications)
+        INSTRUCTIONS:
+        1. {structure_instruction}
+        2. **Citations:** <a href='URL' target='_blank'>[Source]</a>.
+        3. **No Hallucinations:** Verify facts against the vault. If data is missing, say "Data unavailable".
+        4. **HTML Format:** Use <h3>, <p>, <ul>, <li>.
         """
         
         try:
-            report_content = self.llm.invoke(prompt).content
-        except Exception as e:
-            report_content = f"<p style='color:red'>AI Processing Error: {str(e)}</p>"
-        
-        # 4. GATHER VISUALS
-        images = self._smart_image_search(topic, region_code)
-        
-        return report_content, images
+            report = self.llm.invoke(prompt).content
+        except:
+            report = "AI Generation Error."
 
-# Initialize Agent
-agent = OmniProAgent()
+        # 4. VISUALS & CHARTS
+        images = self._smart_image_sweep(topic, region_code)
+        chart = self._generate_chart(report)
+        
+        return report, images, chart
+
+agent = InfinityAgent()
 
 # ==========================================
 # 🌐 API ROUTES
@@ -241,11 +292,12 @@ async def serve_interface(request: Request):
 
 @app.post("/analyze")
 async def analyze_endpoint(request: SearchRequest):
-    report, images = agent.generate_report(request.topic, request.region, request.mode)
+    report, images, chart = agent.generate_report(request.topic, request.region, request.mode)
     return JSONResponse(content={
         "topic": request.topic,
         "report": report,
-        "images": images
+        "images": images,
+        "chart": chart
     })
 
 if __name__ == "__main__":
