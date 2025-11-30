@@ -23,7 +23,7 @@ import plotly.utils
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NewsWeave-Infinity")
 
-INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY")
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -302,3 +302,4 @@ async def analyze_endpoint(request: SearchRequest):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
