@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsWeave AI - Forensic Intelligence</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CORE STYLES */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { overflow-x: hidden; color: white; background-color: #0f0f0f; }
+        
+        /* VIDEO BACKGROUND */
+        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; filter: brightness(0.4) contrast(1.2); }
+        
+        /* CONTAINERS */
+        .container { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; position: relative; z-index: 1; }
+        
+        /* LOGO */
+        .logo-container { text-align: center; margin-bottom: 40px; animation: fadeInDown 1.5s ease; }
+        .logo { font-size: 4rem; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 4px; 
+                background: linear-gradient(90deg, #00c6ff, #0072ff); -webkit-background-clip: text; background-clip: text; color: transparent; 
+                text-shadow: 0 0 30px rgba(0, 114, 255, 0.5); }
+        .tagline { font-size: 1.2rem; color: #a0a0a0; max-width: 700px; margin-top: 15px; }
+
+        /* BUTTONS */
+        .btn-glow { background: linear-gradient(90deg, #00c6ff, #0072ff); color: white; border: none; padding: 16px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px rgba(0, 114, 255, 0.6); transition: all 0.3s ease; letter-spacing: 1px; }
+        .btn-glow:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0, 114, 255, 0.8); }
+
+        /* PAGES */
+        .page { display: none; width: 100%; min-height: 100vh; padding: 40px 20px; align-items: center; justify-content: center; flex-direction: column; }
+        .page.active { display: flex; }
+
+        /* INPUT BOX */
+        .input-wrapper { background: rgba(20, 20, 20, 0.8); padding: 50px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); width: 100%; max-width: 800px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; animation: fadeInUp 0.8s ease; }
+        .search-bar { width: 100%; padding: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-size: 1.2rem; margin: 30px 0; outline: none; transition: 0.3s; }
+        .search-bar:focus { border-color: #00c6ff; background: rgba(255,255,255,0.1); }
+
+        /* RESULTS */
+        .results-container { width: 100%; max-width: 1200px; }
+        .results-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 30px; }
+        
+        .card { background: rgba(20, 20, 20, 0.8); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; backdrop-filter: blur(20px); }
+        .report-text { line-height: 1.8; color: #e0e0e0; font-size: 1.05rem; }
+        .report-text h3 { color: #00c6ff; margin-top: 20px; margin-bottom: 10px; font-size: 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .report-text strong { color: white; }
+        
+        .image-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .img-item { width: 100%; height: 200px; border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        .img-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.4s; }
+        .img-item:hover img { transform: scale(1.1); }
+        .img-caption { position: absolute; bottom: 0; background: rgba(0,0,0,0.8); width: 100%; padding: 10px; font-size: 0.8rem; color: #00c6ff; }
+
+        /* LOADER */
+        .loader { display: none; border: 4px solid rgba(255, 255, 255, 0.1); border-top: 4px solid #00c6ff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* ANIMATIONS */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 900px) { .results-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <video id="video-background" autoplay muted loop>
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-network-connection-background-2839-large.mp4" type="video/mp4">
+    </video>
+
+    <div class="container" id="landing-page">
+        <div class="logo-container">
+            <h1 class="logo">NEWSWEAVE</h1>
+            <p class="tagline">FORENSIC INTELLIGENCE ENGINE v8.0</p>
+        </div>
+        <button class="btn-glow" onclick="showInput()">INITIALIZE SYSTEM</button>
+    </div>
+
+    <div class="page" id="input-page">
+        <div class="input-wrapper">
+            <h2 style="color:white; margin-bottom: 10px;">Define Target Parameter</h2>
+            <p style="color:#aaa;">Enter topic, event, or entity for deep forensic scan.</p>
+            
+            <input type="text" class="search-bar" id="topic-input" placeholder="e.g. 2025 Global Economic Forecast...">
+            
+            <div class="loader" id="loader"></div>
+            <button class="btn-glow" id="run-btn" onclick="runAnalysis()">EXECUTE SCAN</button>
+        </div>
+    </div>
+
+    <div class="page" id="results-page" style="justify-content: flex-start; padding-top: 50px;">
+        <div class="results-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 class="logo" style="font-size: 2rem; margin:0;">INTELLIGENCE DOSSIER</h2>
+                <button class="btn-glow" style="padding: 10px 30px; font-size: 1rem;" onclick="resetApp()">NEW SEARCH</button>
+            </div>
+            
+            <div class="results-grid">
+                <div class="card">
+                    <div id="report-content" class="report-text"></div>
+                </div>
+
+                <div class="image-grid" id="image-grid">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM ELEMENTS
+        const landing = document.getElementById('landing-page');
+        const inputPage = document.getElementById('input-page');
+        const resultsPage = document.getElementById('results-page');
+        const topicInput = document.getElementById('topic-input');
+        const loader = document.getElementById('loader');
+        const runBtn = document.getElementById('run-btn');
+
+        function showInput() {
+            landing.style.display = 'none';
+            inputPage.classList.add('active');
+        }
+
+        async function runAnalysis() {
+            const topic = topicInput.value.trim();
+            if (!topic) return alert("Please enter a topic.");
+
+            // UI LOADING
+            runBtn.style.display = 'none';
+            loader.style.display = 'block';
+
+            try {
+                // API CALL
+                const res = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: topic })
+                });
+
+                const data = await res.json();
+
+                // RENDER REPORT
+                document.getElementById('report-content').innerHTML = data.report;
+
+                // RENDER IMAGES
+                const imgContainer = document.getElementById('image-grid');
+                imgContainer.innerHTML = '';
+                if(data.images.length > 0) {
+                    data.images.forEach(img => {
+                        imgContainer.innerHTML += `
+                            <div class="img-item">
+                                <img src="${img.src}" alt="${img.title}" onerror="this.style.display='none'">
+                                <div class="img-caption">${img.title.substring(0, 40)}...</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    imgContainer.innerHTML = '<p style="color:#aaa; text-align:center;">No visual evidence found.</p>';
+                }
+
+                // SWITCH PAGE
+                inputPage.classList.remove('active');
+                resultsPage.classList.add('active');
+
+            } catch (err) {
+                alert("Connection Failed. Server may be sleeping.");
+                console.error(err);
+            } finally {
+                runBtn.style.display = 'block';
+                loader.style.display = 'none';
+            }
+        }
+
+        function resetApp() {
+            resultsPage.classList.remove('active');
+            inputPage.classList.add('active');
+            topicInput.value = '';
+        }
+    </script>
+</body>
+</html>
