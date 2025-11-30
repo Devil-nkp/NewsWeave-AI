@@ -14,7 +14,7 @@ import re
 #  CONFIGURATION (SERVER SIDE)
 # ==========================================
 
-INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY")
 
 app = FastAPI()
 
@@ -136,4 +136,5 @@ async def analyze_topic(request: SearchRequest):
 
 # Entry point for local testing
 if __name__ == "__main__":
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
