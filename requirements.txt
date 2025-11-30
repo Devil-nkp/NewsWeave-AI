@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+jinja2
+python-multipart
+langchain-groq
+duckduckgo-search
+textblob
+plotly
+pandas
+wikipedia
+requests
+scikit-learn
