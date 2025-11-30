@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Omni-Pro v10</title>
+    <title>NewsWeave Infinity v11</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* --- CORE --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #000; color: white; overflow-x: hidden; }
         
-        /* VIDEO */
         #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
 
         /* LAYOUT */
@@ -18,123 +17,152 @@
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 1s ease forwards; }
         
-        /* LANDING */
-        .logo-lg { font-size: 5rem; font-weight: 900; letter-spacing: 5px; background: linear-gradient(90deg, #fff, #ccc); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 50px rgba(255,255,255,0.2); margin-bottom: 10px; }
+        /* PAGE 1: LANDING */
+        .logo-lg { font-size: 5rem; font-weight: 900; letter-spacing: 5px; background: linear-gradient(90deg, #fff, #aaa); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 50px rgba(255,255,255,0.2); margin-bottom: 10px; }
         .tagline { font-size: 1.2rem; color: #ccc; letter-spacing: 1px; margin-bottom: 40px; text-shadow: 0 2px 4px black; }
-        .btn-start { padding: 15px 50px; font-size: 1.2rem; background: white; color: black; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
-        .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(255,255,255,0.6); }
+        .btn-start { padding: 15px 50px; font-size: 1.2rem; background: #007bff; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 0 20px rgba(0,123,255,0.4); }
+        .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0,123,255,0.8); }
 
-        /* SEARCH PAGE (Compact Bar) */
-        .search-wrapper { width: 100%; max-width: 800px; text-align: center; animation: fadeInUp 1s ease; }
+        /* PAGE 2: COMMAND CENTER */
+        .search-wrapper { width: 100%; max-width: 900px; text-align: center; animation: fadeInUp 1s ease; }
+        
+        /* SUPER BAR (Compact & Powerful) */
         .super-bar {
             display: flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(15px);
-            border: 1px solid #007bff; /* Blue border */
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid #007bff;
             border-radius: 50px;
-            padding: 5px 10px;
-            box-shadow: 0 0 30px rgba(0, 123, 255, 0.3); /* Blue Glow */
-            transition: 0.3s;
-            height: 65px;
+            padding: 5px 15px;
+            box-shadow: 0 0 40px rgba(0, 123, 255, 0.3);
+            height: 70px;
         }
-        .super-bar:focus-within { border-color: #fff; box-shadow: 0 0 50px rgba(0, 123, 255, 0.6); }
 
         .search-input {
             flex: 1;
             background: transparent;
             border: none;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             padding: 0 15px;
             outline: none;
-            font-weight: 500;
         }
-        .search-input::placeholder { color: #aaa; font-weight: 400; }
+        .search-input::placeholder { color: #888; }
 
-        /* DROPDOWNS INSIDE BAR */
+        /* DROPDOWNS */
         .bar-select {
             background: transparent;
-            color: white;
+            color: #ccc;
             border: none;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             cursor: pointer;
             outline: none;
-            appearance: none; 
-            padding: 5px 10px;
-            border-radius: 20px;
-            transition: 0.2s;
-            max-width: 120px;
-            text-align: center;
+            padding: 5px 5px;
             font-weight: 600;
+            max-width: 130px;
         }
-        .bar-select:hover { background: rgba(255,255,255,0.1); }
         .bar-select option { background: #000; color: white; }
-
-        /* ICONS for Selectors */
-        .icon-wrapper { position: relative; display: flex; align-items: center; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 5px; margin-right: 5px; }
-        .icon-wrapper i { color: #007bff; font-size: 1.1rem; position: absolute; left: 10px; pointer-events: none; } /* Blue Icons */
-        .bar-select.region { padding-left: 30px; }
         
+        .icon-wrapper { 
+            display: flex; 
+            align-items: center; 
+            border-right: 1px solid rgba(255,255,255,0.2); 
+            padding-right: 10px; 
+            margin-right: 5px; 
+        }
+        .icon-wrapper i { color: #007bff; font-size: 1.1rem; margin-right: 5px; }
+
         .submit-btn {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             border: none;
-            background: #007bff; /* Blue Button */
+            background: #007bff;
             color: white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: 0.3s;
-            margin-left: 5px;
+            margin-left: 10px;
             font-size: 1.2rem;
         }
         .submit-btn:hover { transform: scale(1.1); background: white; color: #007bff; }
 
-        /* HOW TO USE MODAL */
-        .help-link { margin-top: 20px; color: white; cursor: pointer; text-decoration: none; font-size: 0.9rem; opacity: 0.7; transition:0.3s; }
-        .help-link:hover { opacity: 1; text-decoration: underline; }
-        
-        /* RESULTS SECTION */
+        /* HELP LINK */
+        .help-link { margin-top: 15px; color: #aaa; cursor: pointer; font-size: 0.9rem; transition: 0.3s; text-shadow: 0 1px 2px black; }
+        .help-link:hover { color: #007bff; text-decoration: underline; }
+
+        /* RESULTS PAGE */
         .results-wrapper { 
             width: 100%; 
-            max-width: 1200px; 
+            max-width: 1400px; /* Wider for more images */
             margin-top: 40px; 
             display: grid; 
-            grid-template-columns: 2fr 1fr; 
+            grid-template-columns: 40% 60%; /* Text left, Massive Image Grid right */
             gap: 30px; 
             animation: fadeInUp 1s ease;
         }
 
-        .card { background: rgba(10, 10, 10, 0.9); border: 1px solid #007bff; padding: 30px; border-radius: 20px; backdrop-filter: blur(20px); box-shadow: 0 0 40px rgba(0,0,0,0.8); max-height: 75vh; overflow-y: auto; }
+        .card { background: rgba(10, 10, 10, 0.9); border: 1px solid #007bff; padding: 30px; border-radius: 20px; backdrop-filter: blur(20px); box-shadow: 0 0 40px rgba(0,0,0,0.8); max-height: 85vh; overflow-y: auto; }
         
-        .report-content h3 { color: #007bff; margin: 20px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .report-content h3 { color: #007bff; margin: 25px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 1.4rem; }
         .report-content p { line-height: 1.7; color: #eee; margin-bottom: 15px; font-size: 1.05rem; }
-        .report-content strong { color: white; font-weight: 700; }
-        .report-content a { color: #007bff; font-weight: bold; }
+        .report-content ul { padding-left: 20px; color: #ddd; }
+        .report-content li { margin-bottom: 8px; }
+        .report-content a { color: #ff6b6b; font-weight: bold; text-decoration: none; }
 
-        /* IMAGE GRID */
-        .img-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        .img-item { height: 180px; border-radius: 12px; overflow: hidden; cursor: pointer; border: 1px solid #333; transition: 0.3s; position: relative; }
-        .img-item:hover { transform: scale(1.03); border-color: #007bff; }
+        /* INFINITY IMAGE GRID (High Density) */
+        .img-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+            gap: 10px; 
+            max-height: 85vh; 
+            overflow-y: auto; 
+            padding-right: 5px;
+        }
+        
+        .img-item { 
+            height: 120px; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            cursor: pointer; 
+            border: 1px solid #333; 
+            transition: 0.3s; 
+            position: relative; 
+        }
+        .img-item:hover { transform: scale(1.05); border-color: #007bff; z-index: 10; }
         .img-item img { width: 100%; height: 100%; object-fit: cover; }
-
+        
         /* FULLSCREEN MODAL */
         .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        .fs-modal img { max-width: 90%; max-height: 90%; border-radius: 10px; box-shadow: 0 0 50px rgba(0,123,255,0.2); }
-        .fs-close { position: absolute; top: 30px; right: 30px; color: white; font-size: 2rem; cursor: pointer; }
+        .fs-modal img { max-width: 95%; max-height: 95%; border-radius: 5px; box-shadow: 0 0 60px rgba(0,123,255,0.3); }
+        .fs-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 3rem; cursor: pointer; }
 
-        /* HELP MODAL */
+        /* HELP MODAL (Enhanced) */
         .help-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .help-box { background: #0f0f0f; padding: 40px; border-radius: 15px; max-width: 500px; border: 1px solid #007bff; color: white; line-height: 1.6; box-shadow: 0 0 50px rgba(0, 123, 255, 0.2); }
+        .help-box { 
+            background: #0f0f0f; 
+            padding: 30px; 
+            border-radius: 15px; 
+            max-width: 700px; 
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid #007bff; 
+            color: white; 
+            line-height: 1.6; 
+            box-shadow: 0 0 50px rgba(0, 123, 255, 0.2); 
+        }
 
         /* LOADER */
-        .loader { display: none; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        .loader { display: none; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #007bff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 30px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 1000px) { .results-wrapper { grid-template-columns: 1fr; } .img-grid { max-height: 400px; } }
     </style>
 </head>
 <body>
@@ -146,66 +174,113 @@
     <!-- PAGE 1: LANDING -->
     <div class="container" id="p1">
         <h1 class="logo-lg">NEWSWEAVE</h1>
-        <p class="tagline">GLOBAL INTELLIGENCE ENGINE v10</p>
-        <button class="btn-start" onclick="navTo('p2')">INITIALIZE</button>
+        <p class="tagline">INFINITY INTELLIGENCE ENGINE v11.0</p>
+        <button class="btn-start" onclick="navTo('p2')">INITIALIZE SYSTEM</button>
     </div>
 
-    <!-- PAGE 2: COMMAND CENTER (CENTERED) -->
-    <div class="container hidden" id="p2">
+    <!-- PAGE 2: COMMAND CENTER -->
+    <div class="container hidden" id="p2" style="justify-content: flex-start; padding-top: 10vh;">
         <div class="search-wrapper">
-            <h2 style="margin-bottom: 25px; text-shadow: 0 2px 4px black; font-weight: 700;">INTELLIGENCE COMMAND</h2>
+            <h2 style="margin-bottom: 25px; text-shadow: 0 2px 4px black; font-weight: 700;">GLOBAL COMMAND</h2>
             
             <!-- SUPER BAR -->
             <div class="super-bar">
-                <!-- Region Selector -->
+                <!-- Region -->
                 <div class="icon-wrapper">
                     <i class="fas fa-globe"></i>
-                    <select id="region" class="bar-select region">
-                        <option value="Global">Global</option>
-                        <option value="USA">USA</option>
-                        <option value="India">India</option>
-                        <option value="UK">UK</option>
-                        <option value="China">China</option>
-                        <option value="Japan">Japan</option>
-                        <option value="Germany">Germany</option>
-                        <option value="France">France</option>
-                        <option value="Russia">Russia</option>
-                        <option value="Brazil">Brazil</option>
-                        <option value="Canada (en)">Canada</option>
-                        <option value="Australia">Australia</option>
-                        <!-- Truncated for brevity but supports all -->
+                    <select id="region" class="bar-select">
+                        <option value="Global">🌍 Global</option>
+                        <option value="USA">🇺🇸 USA</option>
+                        <option value="India">🇮🇳 India</option>
+                        <option value="UK">🇬🇧 UK</option>
+                        <option value="Argentina">🇦🇷 Argentina</option>
+                        <option value="Australia">🇦🇺 Australia</option>
+                        <option value="Austria">🇦🇹 Austria</option>
+                        <option value="Belgium (fr)">🇧🇪 Belgium (FR)</option>
+                        <option value="Belgium (nl)">🇧🇪 Belgium (NL)</option>
+                        <option value="Brazil">🇧🇷 Brazil</option>
+                        <option value="Bulgaria">🇧🇬 Bulgaria</option>
+                        <option value="Canada (en)">🇨🇦 Canada (EN)</option>
+                        <option value="Canada (fr)">🇨🇦 Canada (FR)</option>
+                        <option value="Chile">🇨🇱 Chile</option>
+                        <option value="China">🇨🇳 China</option>
+                        <option value="Colombia">🇨🇴 Colombia</option>
+                        <option value="Croatia">🇭🇷 Croatia</option>
+                        <option value="Czech Republic">🇨🇿 Czech Rep</option>
+                        <option value="Denmark">🇩🇰 Denmark</option>
+                        <option value="Estonia">🇪🇪 Estonia</option>
+                        <option value="Finland">🇫🇮 Finland</option>
+                        <option value="France">🇫🇷 France</option>
+                        <option value="Germany">🇩🇪 Germany</option>
+                        <option value="Greece">🇬🇷 Greece</option>
+                        <option value="Hong Kong">🇭🇰 Hong Kong</option>
+                        <option value="Hungary">🇭🇺 Hungary</option>
+                        <option value="Indonesia">🇮🇩 Indonesia</option>
+                        <option value="Ireland">🇮🇪 Ireland</option>
+                        <option value="Israel">🇮🇱 Israel</option>
+                        <option value="Italy">🇮🇹 Italy</option>
+                        <option value="Japan">🇯🇵 Japan</option>
+                        <option value="Korea">🇰🇷 Korea</option>
+                        <option value="Latvia">🇱🇻 Latvia</option>
+                        <option value="Lithuania">🇱🇹 Lithuania</option>
+                        <option value="Malaysia">🇲🇾 Malaysia</option>
+                        <option value="Mexico">🇲🇽 Mexico</option>
+                        <option value="Netherlands">🇳🇱 Netherlands</option>
+                        <option value="New Zealand">🇳🇿 New Zealand</option>
+                        <option value="Norway">🇳🇴 Norway</option>
+                        <option value="Pakistan">🇵🇰 Pakistan</option>
+                        <option value="Peru">🇵🇪 Peru</option>
+                        <option value="Philippines">🇵🇭 Philippines</option>
+                        <option value="Poland">🇵🇱 Poland</option>
+                        <option value="Portugal">🇵🇹 Portugal</option>
+                        <option value="Romania">🇷🇴 Romania</option>
+                        <option value="Russia">🇷🇺 Russia</option>
+                        <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+                        <option value="Singapore">🇸🇬 Singapore</option>
+                        <option value="Slovakia">🇸🇰 Slovakia</option>
+                        <option value="Slovenia">🇸🇮 Slovenia</option>
+                        <option value="South Africa">🇿🇦 South Africa</option>
+                        <option value="Spain">🇪🇸 Spain</option>
+                        <option value="Sweden">🇸🇪 Sweden</option>
+                        <option value="Switzerland (de)">🇨🇭 Switzerland (DE)</option>
+                        <option value="Switzerland (fr)">🇨🇭 Switzerland (FR)</option>
+                        <option value="Taiwan">🇹🇼 Taiwan</option>
+                        <option value="Thailand">🇹🇭 Thailand</option>
+                        <option value="Turkey">🇹🇷 Turkey</option>
+                        <option value="Ukraine">🇺🇦 Ukraine</option>
+                        <option value="Vietnam">🇻🇳 Vietnam</option>
                     </select>
                 </div>
 
-                <!-- Mode Selector -->
-                <div class="icon-wrapper" style="border:none; margin-right:0;">
-                    <i class="fas fa-bolt"></i>
-                    <select id="mode" class="bar-select region">
+                <!-- Mode -->
+                <div class="icon-wrapper">
+                    <i class="fas fa-brain"></i>
+                    <select id="mode" class="bar-select">
                         <option value="Auto">Auto</option>
-                        <option value="Fast">Fast</option>
+                        <option value="Catalog">Catalog/List</option>
                         <option value="Fact Check">Verify</option>
+                        <option value="Deep Research">Deep Dive</option>
                         <option value="Market Analysis">Market</option>
-                        <option value="Deep Research">Deep</option>
                     </select>
                 </div>
 
-                <input type="text" id="topic" class="search-input" placeholder="Ask anything...">
+                <input type="text" id="topic" class="search-input" placeholder="Ex: 'List all emerging AI tools'...">
                 
                 <button class="submit-btn" onclick="runScan()"><i class="fas fa-arrow-up"></i></button>
             </div>
 
-            <div class="help-link" onclick="document.getElementById('help-modal').style.display='flex'">System Manual / Usage Guide</div>
+            <div class="help-link" onclick="document.getElementById('help-modal').style.display='flex'">System Capabilities & Usage</div>
             <div class="loader" id="loader"></div>
         </div>
 
         <!-- RESULTS AREA -->
         <div class="results-wrapper hidden" id="results-area">
-            <!-- REPORT CARD -->
+            <!-- REPORT -->
             <div class="card">
                 <div id="report-content" class="report-content"></div>
             </div>
             
-            <!-- IMAGE SIDEBAR -->
+            <!-- INFINITY IMAGES -->
             <div class="img-grid" id="img-grid"></div>
         </div>
     </div>
@@ -216,15 +291,44 @@
         <img id="fs-img" src="" alt="Fullscreen">
     </div>
 
-    <!-- HELP MODAL -->
+    <!-- HELP MODAL (Enhanced) -->
     <div class="help-modal" id="help-modal" onclick="if(event.target===this)this.style.display='none'">
         <div class="help-box">
-            <h3 style="color:#007bff; margin-bottom:10px;">System Manual</h3>
-            <p><strong>1. Auto Mode:</strong> The AI automatically detects if you need a Fact Check, Market Data, or Deep Research.</p>
-            <p><strong>2. Region Lock:</strong> Select a country to force the AI to use local sources (e.g. 'India' uses INR currency and Indian laws).</p>
-            <p><strong>3. Visuals:</strong> Click any image in the results to view it in high-resolution fullscreen.</p>
+            <h2 style="color:#007bff; margin-bottom:15px; border-bottom: 1px solid #333; padding-bottom: 10px;">SYSTEM MANUAL & USAGE GUIDE</h2>
+            
+            <div style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+                <h4 style="color:white; margin-top:15px;"> What is NewsWeave?</h4>
+                <p style="font-size:0.95rem; color:#ccc; margin-bottom:15px;">
+                    NewsWeave is an autonomous <strong>Forensic Intelligence Agent</strong>. Unlike standard search engines that provide links, NewsWeave reads, verifies, and synthesizes data into a comprehensive dossier. It uses a multi-vector search engine to cross-reference facts, debunk rumors, and gather real-time market data.
+                </p>
+
+                <h4 style="color:white; margin-top:15px;"> How to Operate</h4>
+                <ol style="margin-left:20px; color:#ccc; font-size:0.95rem; margin-bottom:15px; line-height:1.6;">
+                    <li><strong>Select Region ():</strong> Click the Globe icon. Choose your target country (e.g., 'India' for INR currency & local laws, 'USA' for federal data).</li>
+                    <li><strong>Select Intelligence Mode ():</strong> Click the Brain icon. Choose how the AI should think (see modes below).</li>
+                    <li><strong>Input Parameter:</strong> Type your query in the Superbar. Be specific for best results.</li>
+                    <li><strong>Execute:</strong> Click the Blue Arrow to launch the investigation.</li>
+                </ol>
+
+                <h4 style="color:white; margin-top:15px;"> Intelligence Modes</h4>
+                <ul style="margin-left:20px; color:#ccc; font-size:0.95rem; margin-bottom:15px; line-height:1.6;">
+                    <li><strong>Auto:</strong> The AI analyzes your prompt and picks the best strategy automatically.</li>
+                    <li><strong>Catalog / List:</strong> Forces the AI to generate exhaustive lists (e.g., "List all new cyber crimes").</li>
+                    <li><strong>Fact Check:</strong> rigorous verification protocol. Perfect for rumors, hoaxes, or "too good to be true" news.</li>
+                    <li><strong>Market Analysis:</strong> Hunts for financial tickers, revenue reports, and economic growth stats.</li>
+                    <li><strong>Deep Research:</strong> The standard "All-Rounder" mode for deep context and history.</li>
+                </ul>
+
+                <h4 style="color:white; margin-top:15px;"> Sample Prompts</h4>
+                <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; color:#00c6ff; font-family:monospace; font-size:0.9rem;">
+                    • "List all emerging AI video tools released in 2025" (Catalog)<br>
+                    • "Is the 'WhatsApp Gold' virus warning real?" (Fact Check)<br>
+                    • "Reliance Industries Q4 2025 revenue analysis" (Market - India)<br>
+                    • "Impact of new H1B visa rules on tech sector" (Deep Research - USA)
+                </div>
+            </div>
             <br>
-            <button class="btn-start" style="padding:10px 30px; font-size:1rem; border: 1px solid #007bff; color: #007bff;" onclick="document.getElementById('help-modal').style.display='none'">Close</button>
+            <button class="btn-start" style="padding:10px 30px; font-size:1rem; width:100%;" onclick="document.getElementById('help-modal').style.display='none'">Close Manual</button>
         </div>
     </div>
 
@@ -257,13 +361,12 @@
                 // Render Text
                 document.getElementById('report-content').innerHTML = data.report;
 
-                // Render Images
+                // Render Images (Massive Grid)
                 const grid = document.getElementById('img-grid');
                 grid.innerHTML = '';
                 data.images.forEach(img => {
                     grid.innerHTML += `<div class="img-item" onclick="openFS('${img.src}')">
-                        <img src="${img.src}" onerror="this.style.display='none'">
-                        <div class="img-cap">${img.title}</div>
+                        <img src="${img.src}" onerror="this.parentElement.style.display='none'">
                     </div>`;
                 });
 
@@ -281,7 +384,6 @@
             document.getElementById('fs-modal').style.display = 'flex';
         }
 
-        // Enter key support
         document.getElementById('topic').addEventListener('keypress', (e) => {
             if(e.key === 'Enter') runScan();
         });
