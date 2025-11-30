@@ -10,4 +10,5 @@ pandas
 wikipedia
 requests
 scikit-learn
+statsmodels
 pydantic
