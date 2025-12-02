@@ -3,213 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Singularity v19</title>
+    <title>NewsWeave Infinity | Deployable AI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #000; color: white; overflow-x: hidden; }
-        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
+        :root { --neon: #00f3ff; --dark: #050505; --glass: rgba(20, 20, 20, 0.85); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Rajdhani', sans-serif; }
         
-        .container { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.5s ease; }
-        .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 1s ease forwards; }
-
-        .logo-lg { font-size: 5rem; font-weight: 900; letter-spacing: 5px; background: linear-gradient(90deg, #fff, #aaa); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 50px rgba(255,255,255,0.2); margin-bottom: 10px; }
-        .tagline { font-size: 1.2rem; color: #ccc; letter-spacing: 1px; margin-bottom: 20px; text-shadow: 0 2px 4px black; }
+        body { background: var(--dark); color: #fff; overflow-x: hidden; min-height: 100vh; }
         
-        .social-proof { background: rgba(0,0,0,0.6); padding: 10px 25px; border-radius: 30px; border: 1px solid #333; font-size: 0.9rem; color: #aaa; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px); }
-        .social-proof i { color: #ff6b6b; animation: pulse 1.5s infinite; }
-        .like-number { color: #00c6ff; font-weight: bold; font-size: 1.1rem; }
+        /* CYBERPUNK BACKGROUND */
+        .bg-anim {
+            position: fixed; top:0; left:0; width:100%; height:100%; z-index:-1;
+            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%);
+        }
+        .grid-lines {
+            position: absolute; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(50px); } }
 
-        .btn-start { padding: 15px 50px; font-size: 1.2rem; background: #007bff; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 0 20px rgba(0,123,255,0.4); }
-        .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0,123,255,0.8); }
+        /* UI CONTAINER */
+        .app-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; align-items: center; }
 
-        .search-wrapper { width: 100%; max-width: 900px; text-align: center; animation: fadeInUp 1s ease; }
-        .super-bar { display: flex; align-items: center; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); border: 1px solid #007bff; border-radius: 50px; padding: 5px 15px; box-shadow: 0 0 40px rgba(0, 123, 255, 0.3); height: 70px; }
+        /* HEADER & STATS */
+        .header { margin-top: 10vh; text-align: center; width: 100%; }
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 4rem; text-shadow: 0 0 20px var(--neon); letter-spacing: 5px; margin-bottom: 10px; }
+        .tagline { color: #888; letter-spacing: 2px; text-transform: uppercase; font-size: 1.2rem; }
+
+        .stat-badge {
+            margin-top: 20px;
+            display: inline-flex; align-items: center; gap: 10px;
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--neon);
+            padding: 8px 20px; border-radius: 4px;
+            font-size: 1.1rem;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(5px);
+        }
+        .stat-badge i { color: #ff2a6d; animation: beat 1.5s infinite; }
+        @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+
+        /* CONTROL PANEL */
+        .control-panel {
+            width: 100%; max-width: 900px; margin-top: 50px;
+            background: var(--glass); border: 1px solid #333;
+            padding: 20px; border-radius: 10px;
+            display: flex; gap: 10px; flex-wrap: wrap;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        .input-group { flex: 1; min-width: 300px; position: relative; }
+        .main-input {
+            width: 100%; padding: 15px 20px;
+            background: #000; border: 1px solid #444; color: var(--neon);
+            font-size: 1.3rem; outline: none; transition: 0.3s;
+        }
+        .main-input:focus { border-color: var(--neon); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+
+        .select-group { display: flex; gap: 10px; }
+        .cyber-select {
+            background: #111; color: #fff; border: 1px solid #444;
+            padding: 10px; font-size: 1rem; cursor: pointer; outline: none;
+        }
         
-        .search-input { flex: 1; background: transparent; border: none; color: white; font-size: 1.1rem; padding: 0 15px; outline: none; }
-        .bar-select { background: transparent; color: #ccc; border: none; font-size: 0.9rem; cursor: pointer; outline: none; padding: 5px; font-weight: 600; max-width: 130px; }
-        .bar-select option { background: #000; color: white; }
-        .icon-wrapper { display: flex; align-items: center; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 10px; margin-right: 5px; }
-        .icon-wrapper i { color: #007bff; font-size: 1.1rem; margin-right: 5px; }
+        .btn-launch {
+            background: var(--neon); color: #000; border: none;
+            padding: 0 30px; font-weight: 900; font-size: 1.2rem;
+            cursor: pointer; transition: 0.3s;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+        }
+        .btn-launch:hover { background: #fff; box-shadow: 0 0 30px var(--neon); }
 
-        .submit-btn { width: 45px; height: 45px; border-radius: 50%; border: none; background: #007bff; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; margin-left: 10px; font-size: 1.2rem; }
-        .submit-btn:hover { transform: scale(1.1); background: white; color: #007bff; }
+        /* RESULTS MATRIX */
+        .results-matrix {
+            width: 100%; max-width: 1400px; margin-top: 40px;
+            display: grid; grid-template-columns: 35% 65%; gap: 20px;
+            opacity: 0; transform: translateY(20px); transition: 0.5s;
+        }
+        .results-matrix.active { opacity: 1; transform: translateY(0); }
 
-        .help-link { margin-top: 15px; color: #aaa; cursor: pointer; font-size: 0.9rem; transition: 0.3s; text-shadow: 0 1px 2px black; }
-        .help-link:hover { color: #007bff; text-decoration: underline; }
+        /* LEFT: REPORT */
+        .report-box {
+            background: var(--glass); border: 1px solid var(--neon);
+            padding: 30px; height: 80vh; overflow-y: auto;
+            position: relative;
+        }
+        .report-content { font-size: 1.1rem; line-height: 1.7; color: #ddd; }
+        .report-content h1 { font-family: 'Orbitron'; color: var(--neon); font-size: 1.8rem; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .report-content h3 { color: #fff; margin: 25px 0 10px; background: rgba(255,255,255,0.05); padding: 5px; border-left: 3px solid var(--neon); }
+        .report-content a { color: #ff2a6d; text-decoration: none; font-weight: bold; }
 
-        .results-wrapper { width: 100%; max-width: 1400px; margin-top: 40px; display: grid; grid-template-columns: 40% 60%; gap: 30px; animation: fadeInUp 1s ease; }
-        .card { background: rgba(10, 10, 10, 0.9); border: 1px solid #007bff; padding: 30px; border-radius: 20px; backdrop-filter: blur(20px); box-shadow: 0 0 40px rgba(0,0,0,0.8); max-height: 85vh; overflow-y: auto; }
+        /* LIKE BUTTON IN REPORT */
+        .like-btn {
+            position: absolute; top: 20px; right: 20px;
+            background: transparent; border: 1px solid #ff2a6d; color: #ff2a6d;
+            padding: 5px 15px; cursor: pointer; font-size: 0.9rem; transition: 0.3s;
+        }
+        .like-btn:hover, .like-btn.active { background: #ff2a6d; color: white; box-shadow: 0 0 15px #ff2a6d; }
+
+        /* RIGHT: IMAGES */
+        .visual-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px; height: 80vh; overflow-y: auto; padding-right: 5px;
+        }
+        .v-card {
+            border: 1px solid #333; height: 200px; position: relative; overflow: hidden;
+            transition: 0.3s; cursor: pointer;
+        }
+        .v-card:hover { border-color: var(--neon); transform: scale(0.98); }
+        .v-card img { width: 100%; height: 100%; object-fit: cover; }
         
-        .report-content h3 { color: #007bff; margin: 25px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 1.4rem; }
-        .report-content p { line-height: 1.7; color: #eee; margin-bottom: 15px; font-size: 1.05rem; }
-        .report-content ul { padding-left: 20px; color: #ddd; }
-        .report-content a { color: #ff6b6b; font-weight: bold; text-decoration: none; }
+        /* LOADER */
+        .loader {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.9); z-index: 1000;
+            display: none; align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+        .scan-line {
+            width: 300px; height: 4px; background: var(--neon);
+            box-shadow: 0 0 20px var(--neon);
+            animation: scan 2s infinite ease-in-out;
+        }
+        .loading-text { margin-top: 20px; color: var(--neon); font-family: 'Orbitron'; letter-spacing: 2px; }
+        @keyframes scan { 0% { width: 0; } 50% { width: 300px; } 100% { width: 0; } }
 
-        .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 50vh; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;}
-        .img-item { height: 120px; border-radius: 8px; overflow: hidden; cursor: pointer; border: 1px solid #333; transition: 0.3s; }
-        .img-item:hover { transform: scale(1.05); border-color: #007bff; }
-        .img-item img { width: 100%; height: 100%; object-fit: cover; }
-        .chart-container { height: 300px; background: rgba(0,0,0,0.5); border-radius: 10px; }
-
-        .like-section { text-align: center; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px; }
-        .btn-like { background: #1a1a1a; border: 1px solid #ff6b6b; color: #ff6b6b; padding: 10px 30px; border-radius: 30px; cursor: pointer; font-size: 1rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; }
-        .btn-like:hover { background: #ff6b6b; color: white; box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); }
-
-        .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        .fs-modal img { max-width: 95%; max-height: 95%; border-radius: 5px; }
-        .fs-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 3rem; cursor: pointer; }
-
-        .help-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .help-box { background: #0f0f0f; padding: 40px; border-radius: 15px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid #007bff; color: white; line-height: 1.6; box-shadow: 0 0 50px rgba(0, 123, 255, 0.2); }
-
-        .loader { display: none; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #007bff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 30px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        
-        @media (max-width: 1000px) { .results-wrapper { grid-template-columns: 1fr; } }
+        /* MOBILE */
+        @media (max-width: 900px) {
+            .results-matrix { grid-template-columns: 1fr; }
+            .control-panel { flex-direction: column; }
+            .select-group { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
-    <video id="video-background" autoplay muted loop playsinline><source src="/static/background.mp4" type="video/mp4"></video>
 
-    <!-- LANDING -->
-    <div class="container" id="p1">
-        <h1 class="logo-lg">NEWSWEAVE</h1>
-        <p class="tagline">SINGULARITY INTELLIGENCE ENGINE v19.0</p>
-        <div class="social-proof">
-            <i class="fas fa-heart"></i>
-            <!-- ISOLATED LIKE NUMBER -->
-            <span class="like-number" id="landing-likes">{{ total_likes }}</span>
-            <span>People attracted by our results</span>
-        </div>
-        <button class="btn-start" onclick="navTo('p2')">INITIALIZE SYSTEM</button>
-    </div>
+    <div class="bg-anim"><div class="grid-lines"></div></div>
 
-    <!-- COMMAND CENTER -->
-    <div class="container hidden" id="p2" style="justify-content: flex-start; padding-top: 10vh;">
-        <div class="search-wrapper">
-            <h2 style="margin-bottom: 25px; text-shadow: 0 2px 4px black; font-weight: 700;">GLOBAL COMMAND</h2>
-            <div class="super-bar">
-                <div class="icon-wrapper"><i class="fas fa-globe"></i>
-                    <!-- FULL COUNTRY LIST -->
-                    <select id="region" class="bar-select">
-                        <option value="Global">Global</option><option value="USA">USA</option><option value="India">India</option><option value="UK">UK</option>
-                        <option value="Argentina">Argentina</option><option value="Australia">Australia</option><option value="Austria">Austria</option>
-                        <option value="Belgium (fr)">Belgium (FR)</option><option value="Belgium (nl)">Belgium (NL)</option><option value="Brazil">Brazil</option>
-                        <option value="Bulgaria">Bulgaria</option><option value="Canada (en)">Canada (EN)</option><option value="Canada (fr)">Canada (FR)</option>
-                        <option value="Chile">Chile</option><option value="China">China</option><option value="Colombia">Colombia</option>
-                        <option value="Croatia">Croatia</option><option value="Czech Republic">Czech Rep</option><option value="Denmark">Denmark</option>
-                        <option value="Estonia">Estonia</option><option value="Finland">Finland</option><option value="France">France</option>
-                        <option value="Germany">Germany</option><option value="Greece">Greece</option><option value="Hong Kong">Hong Kong</option>
-                        <option value="Hungary">Hungary</option><option value="Indonesia">Indonesia</option><option value="Ireland">Ireland</option>
-                        <option value="Israel">Israel</option><option value="Italy">Italy</option><option value="Japan">Japan</option>
-                        <option value="Korea">Korea</option><option value="Latvia">Latvia</option><option value="Lithuania">Lithuania</option>
-                        <option value="Malaysia">Malaysia</option><option value="Mexico">Mexico</option><option value="Netherlands">Netherlands</option>
-                        <option value="New Zealand">New Zealand</option><option value="Norway">Norway</option><option value="Pakistan">Pakistan</option>
-                        <option value="Peru">Peru</option><option value="Philippines">Philippines</option><option value="Poland">Poland</option>
-                        <option value="Portugal">Portugal</option><option value="Romania">Romania</option><option value="Russia">Russia</option>
-                        <option value="Saudi Arabia">Saudi Arabia</option><option value="Singapore">Singapore</option><option value="Slovakia">Slovakia</option>
-                        <option value="Slovenia">Slovenia</option><option value="South Africa">South Africa</option><option value="Spain">Spain</option>
-                        <option value="Sweden">Sweden</option><option value="Switzerland (de)">Switzerland (DE)</option><option value="Switzerland (fr)">Switzerland (FR)</option>
-                        <option value="Taiwan">Taiwan</option><option value="Thailand">Thailand</option><option value="Turkey">Turkey</option>
-                        <option value="Ukraine">Ukraine</option><option value="Vietnam">Vietnam</option>
-                    </select>
-                </div>
-                <div class="icon-wrapper"><i class="fas fa-brain"></i><select id="mode" class="bar-select"><option value="Auto">Auto</option><option value="Catalog">Catalog</option><option value="Fact Check">Verify</option><option value="Deep Research">Deep</option><option value="Market Analysis">Market</option></select></div>
-                <input type="text" id="topic" class="search-input" placeholder="Ex: 'List all emerging AI tools'...">
-                <button class="submit-btn" onclick="runScan()"><i class="fas fa-arrow-up"></i></button>
+    <div class="app-container">
+        
+        <div class="header">
+            <div class="logo">NEWSWEAVE</div>
+            <div class="tagline">INFINITY INTELLIGENCE ENGINE V13</div>
+            
+            <div class="stat-badge">
+                <i class="fas fa-heart"></i>
+                <span id="likes-count">Initializing...</span>
+                <span>USERS ATTRACTED</span>
             </div>
-            <div class="help-link" onclick="document.getElementById('help-modal').style.display='flex'">System Capabilities & Usage</div>
-            <div class="loader" id="loader"></div>
         </div>
 
-        <div class="results-wrapper hidden" id="results-area">
-            <div class="card">
-                <div id="report-content" class="report-content"></div>
-                <div class="like-section">
-                    <p style="color:#888;">Was this intelligence useful?</p>
-                    <button class="btn-like" onclick="sendLike(this)"><i class="far fa-heart"></i> Like Result</button>
-                </div>
+        <div class="control-panel">
+            <div class="input-group">
+                <input type="text" id="topic" class="main-input" placeholder="Enter Command / Topic...">
             </div>
             
-            <div class="card" style="padding:15px;">
-                <h4 style="color:#007bff; margin-bottom:15px;">Visual Evidence & Data</h4>
-                <div class="img-grid" id="img-grid"></div>
-                <div id="chart-div" class="chart-container" style="display:none;"></div>
+            <div class="select-group">
+                <select id="region-selector" class="cyber-select">
+                    <option value="wt-wt|English (Global)" selected>🌍 Global (English)</option>
+                    <option value="us-en|English (USA)">🇺🇸 USA</option>
+                    <option value="in-en|English (India)">🇮🇳 India (English)</option>
+                    <option value="in-hi|Hindi">🇮🇳 India (Hindi)</option>
+                    <option value="cn-zh|Chinese">🇨🇳 China (Mandarin)</option>
+                    <option value="es-es|Spanish">🇪🇸 Spain (Spanish)</option>
+                    <option value="mx-es|Spanish (Mexico)">🇲🇽 Mexico</option>
+                    <option value="fr-fr|French">🇫🇷 France</option>
+                    <option value="de-de|German">🇩🇪 Germany</option>
+                    <option value="jp-jp|Japanese">🇯🇵 Japan</option>
+                    <option value="ru-ru|Russian">🇷🇺 Russia</option>
+                    <option value="br-pt|Portuguese">🇧🇷 Brazil</option>
+                    <option value="ae-ar|Arabic">🇦🇪 UAE (Arabic)</option>
+                    <option value="kr-kr|Korean">🇰🇷 South Korea</option>
+                    <option value="it-it|Italian">🇮🇹 Italy</option>
+                    <option value="nl-nl|Dutch">🇳🇱 Netherlands</option>
+                    <option value="se-sv|Swedish">🇸🇪 Sweden</option>
+                    <option value="tr-tr|Turkish">🇹🇷 Turkey</option>
+                    <option value="id-id|Indonesian">🇮🇩 Indonesia</option>
+                    <option value="pl-pl|Polish">🇵🇱 Poland</option>
+                    </select>
+
+                <select id="mode" class="cyber-select">
+                    <option value="Deep Research">🧠 Deep Mind</option>
+                    <option value="Fact Check">🛡️ Verify Truth</option>
+                    <option value="Market Analysis">📈 Market Data</option>
+                    <option value="Creative">🎨 Creative</option>
+                </select>
             </div>
+
+            <button class="btn-launch" onclick="ignite()">EXECUTE</button>
         </div>
+
+        <div class="results-matrix" id="matrix">
+            <div class="report-box">
+                <button class="like-btn" id="like-btn" onclick="sendLike()">
+                    <i class="fas fa-heart"></i> Like Result
+                </button>
+                <div class="report-content" id="report-text"></div>
+            </div>
+
+            <div class="visual-grid" id="img-grid"></div>
+        </div>
+
     </div>
 
-    <!-- MODALS -->
-    <div class="fs-modal" id="fs-modal" onclick="this.style.display='none'"><span class="fs-close">&times;</span><img id="fs-img" src=""></div>
-    <div class="help-modal" id="help-modal" onclick="if(event.target===this)this.style.display='none'">
-        <div class="help-box">
-            <h3 style="color:#007bff; margin-bottom:15px;">System Manual v19</h3>
-            <p><strong>1. Infinity Catalog:</strong> Ask for "All crimes" or "List technologies" to get an exhaustive list.</p>
-            <p><strong>2. Visual Trawl:</strong> The system retrieves 20-50 real images, filtering out AI art.</p>
-            <p><strong>3. Aegis Protocol:</strong> Checks event existence before reporting.</p>
-            <br><button class="btn-start" style="padding:10px 30px; font-size:1rem;" onclick="document.getElementById('help-modal').style.display='none'">Close</button>
-        </div>
+    <div class="loader" id="loader">
+        <div class="scan-line"></div>
+        <div class="loading-text">ACCESSING SATELLITE FEEDS...</div>
     </div>
 
     <script>
-        function navTo(id) {
-            document.getElementById('p1').classList.add('hidden');
-            document.getElementById('p2').classList.remove('hidden');
-            document.getElementById('p2').classList.add('fade-in');
-        }
+        // ON LOAD: Get Stats
+        window.addEventListener('load', async () => {
+            try {
+                const res = await fetch('/stats');
+                const data = await res.json();
+                document.getElementById('likes-count').innerText = data.likes.toLocaleString();
+            } catch(e) { console.log('Stats offline'); }
+        });
 
-        async function runScan() {
+        async function ignite() {
             const topic = document.getElementById('topic').value;
-            if(!topic) return alert("Enter a topic.");
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('results-area').classList.add('hidden');
+            const regionData = document.getElementById('region-selector').value.split('|');
+            const regionCode = regionData[0];
+            const langName = regionData[1];
+            const mode = document.getElementById('mode').value;
+
+            if(!topic) return alert("INPUT REQUIRED");
+
+            // UI State
+            document.getElementById('loader').style.display = 'flex';
+            document.getElementById('matrix').classList.remove('active');
+            
+            // Reset Like Button
+            const likeBtn = document.getElementById('like-btn');
+            likeBtn.classList.remove('active');
+            likeBtn.innerHTML = '<i class="fas fa-heart"></i> Like Result';
+            likeBtn.disabled = false;
 
             try {
                 const res = await fetch('/analyze', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ topic, region: document.getElementById('region').value, mode: document.getElementById('mode').value })
+                    body: JSON.stringify({ topic, region_code: regionCode, language_name: langName, mode })
                 });
+
                 const data = await res.json();
 
-                document.getElementById('report-content').innerHTML = data.report;
+                // Inject Text
+                document.getElementById('report-text').innerHTML = data.report;
 
+                // Inject Images
                 const grid = document.getElementById('img-grid');
                 grid.innerHTML = '';
-                if(data.images.length) {
+                if(data.images.length > 0) {
                     data.images.forEach(img => {
-                        grid.innerHTML += `<div class="img-item" onclick="openFS('${img.src}')"><img src="${img.src}" onerror="this.parentElement.style.display='none'"></div>`;
+                        grid.innerHTML += `<div class="v-card" onclick="window.open('${img.src}', '_blank')"><img src="${img.src}" onerror="this.parentElement.style.display='none'"></div>`;
                     });
-                } else { grid.innerHTML = "<p style='color:#888; text-align:center;'>No verified visual evidence.</p>"; }
+                } else {
+                    grid.innerHTML = '<p style="padding:20px; color:#666;">No verified images found in this sector.</p>';
+                }
 
-                if(data.chart) {
-                    document.getElementById('chart-div').style.display = 'block';
-                    Plotly.newPlot('chart-div', JSON.parse(data.chart));
-                } else { document.getElementById('chart-div').style.display = 'none'; }
+                // Show
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('matrix').classList.add('active');
 
-                document.getElementById('results-area').classList.remove('hidden');
-            } catch(e) { alert("System Offline."); } 
-            finally { document.getElementById('loader').style.display = 'none'; }
+            } catch(e) {
+                document.getElementById('loader').style.display = 'none';
+                alert("SYSTEM FAILURE. CHECK CONNECTION.");
+            }
         }
 
-        async function sendLike(btn) {
-            btn.innerHTML = '<i class="fas fa-heart"></i> Liked!';
-            btn.style.background = '#ff6b6b';
-            btn.style.color = 'white';
-            btn.disabled = true;
-            const res = await fetch('/like', { method: 'POST' });
-            const data = await res.json();
-            document.getElementById('landing-likes').innerText = data.new_count;
+        async function sendLike() {
+            const btn = document.getElementById('like-btn');
+            if(btn.disabled) return;
+
+            try {
+                const res = await fetch('/like', {method: 'POST'});
+                const data = await res.json();
+                
+                // Update Global Counter
+                document.getElementById('likes-count').innerText = data.likes.toLocaleString();
+                
+                // Update Button
+                btn.innerHTML = 'Liked <i class="fas fa-check"></i>';
+                btn.classList.add('active');
+                btn.disabled = true;
+            } catch(e) { console.log('Like failed'); }
         }
 
-        function openFS(src) { document.getElementById('fs-img').src = src; document.getElementById('fs-modal').style.display = 'flex'; }
-        document.getElementById('topic').addEventListener('keypress', (e) => { if(e.key === 'Enter') runScan(); });
+        // Enter Key
+        document.getElementById('topic').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') ignite();
+        });
     </script>
 </body>
 </html>
