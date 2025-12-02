@@ -3,85 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Infinity | Deployable AI</title>
+    <title>NewsWeave-AI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        :root { --neon: #00f3ff; --dark: #050505; --glass: rgba(20, 20, 20, 0.85); }
+        :root { 
+            --neon: #00f3ff; 
+            --dark: #050505; 
+            --glass: rgba(0, 0, 0, 0.75); 
+            --border: rgba(255, 255, 255, 0.15);
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Rajdhani', sans-serif; }
         
-        body { background: var(--dark); color: #fff; overflow-x: hidden; min-height: 100vh; }
-        
-        /* CYBERPUNK BACKGROUND */
-        .bg-anim {
-            position: fixed; top:0; left:0; width:100%; height:100%; z-index:-1;
-            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%);
-        }
-        .grid-lines {
-            position: absolute; width: 100%; height: 100%;
-            background-image: linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: gridMove 20s linear infinite;
-        }
-        @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(50px); } }
+        body { background: #000; color: #fff; overflow-x: hidden; min-height: 100vh; }
 
-        /* UI CONTAINER */
+        /* --- VIDEO BACKGROUND ENGINE --- */
+        #video-background {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            z-index: -2;
+        }
+
+        /* DARK OVERLAY (Makes text readable over video) */
+        .overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Adjust opacity (0.1 - 0.9) to darken video */
+            z-index: -1;
+            backdrop-filter: blur(3px); /* Optional: slight blur for focus */
+        }
+
+        /* --- UI CONTAINER --- */
         .app-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; align-items: center; }
 
         /* HEADER & STATS */
-        .header { margin-top: 10vh; text-align: center; width: 100%; }
-        .logo { font-family: 'Orbitron', sans-serif; font-size: 4rem; text-shadow: 0 0 20px var(--neon); letter-spacing: 5px; margin-bottom: 10px; }
-        .tagline { color: #888; letter-spacing: 2px; text-transform: uppercase; font-size: 1.2rem; }
+        .header { margin-top: 10vh; text-align: center; width: 100%; animation: fadeIn 1.5s ease; }
+        .logo { 
+            font-family: 'Orbitron', sans-serif; 
+            font-size: 4rem; 
+            text-shadow: 0 0 20px var(--neon); 
+            letter-spacing: 5px; 
+            margin-bottom: 10px; 
+            background: linear-gradient(to bottom, #fff, #aaa);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .tagline { color: #ccc; letter-spacing: 4px; text-transform: uppercase; font-size: 1.2rem; font-weight: 700; }
 
         .stat-badge {
-            margin-top: 20px;
+            margin-top: 25px;
             display: inline-flex; align-items: center; gap: 10px;
-            background: rgba(0, 243, 255, 0.1);
+            background: rgba(0, 243, 255, 0.15);
             border: 1px solid var(--neon);
-            padding: 8px 20px; border-radius: 4px;
+            padding: 10px 25px; border-radius: 50px;
             font-size: 1.1rem;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
-            backdrop-filter: blur(5px);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            backdrop-filter: blur(10px);
         }
         .stat-badge i { color: #ff2a6d; animation: beat 1.5s infinite; }
         @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
         /* CONTROL PANEL */
         .control-panel {
             width: 100%; max-width: 900px; margin-top: 50px;
-            background: var(--glass); border: 1px solid #333;
-            padding: 20px; border-radius: 10px;
+            background: var(--glass); 
+            border: 1px solid var(--border);
+            padding: 25px; border-radius: 15px;
             display: flex; gap: 10px; flex-wrap: wrap;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            backdrop-filter: blur(20px);
+            animation: slideUp 1s ease 0.2s forwards; opacity: 0;
         }
 
         .input-group { flex: 1; min-width: 300px; position: relative; }
         .main-input {
             width: 100%; padding: 15px 20px;
-            background: #000; border: 1px solid #444; color: var(--neon);
+            background: rgba(0,0,0,0.5); 
+            border: 1px solid #555; 
+            color: #fff;
             font-size: 1.3rem; outline: none; transition: 0.3s;
+            border-radius: 5px;
         }
-        .main-input:focus { border-color: var(--neon); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+        .main-input:focus { border-color: var(--neon); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); background: rgba(0,0,0,0.8); }
 
         .select-group { display: flex; gap: 10px; }
         .cyber-select {
-            background: #111; color: #fff; border: 1px solid #444;
+            background: rgba(0,0,0,0.8); color: #fff; border: 1px solid #555;
             padding: 10px; font-size: 1rem; cursor: pointer; outline: none;
+            border-radius: 5px;
         }
         
         .btn-launch {
             background: var(--neon); color: #000; border: none;
-            padding: 0 30px; font-weight: 900; font-size: 1.2rem;
+            padding: 0 35px; font-weight: 900; font-size: 1.2rem;
             cursor: pointer; transition: 0.3s;
             clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
         }
-        .btn-launch:hover { background: #fff; box-shadow: 0 0 30px var(--neon); }
+        .btn-launch:hover { background: #fff; box-shadow: 0 0 30px var(--neon); transform: scale(1.05); }
 
         /* RESULTS MATRIX */
         .results-matrix {
             width: 100%; max-width: 1400px; margin-top: 40px;
-            display: grid; grid-template-columns: 35% 65%; gap: 20px;
+            display: grid; grid-template-columns: 40% 60%; gap: 25px;
             opacity: 0; transform: translateY(20px); transition: 0.5s;
         }
         .results-matrix.active { opacity: 1; transform: translateY(0); }
@@ -89,60 +117,72 @@
         /* LEFT: REPORT */
         .report-box {
             background: var(--glass); border: 1px solid var(--neon);
-            padding: 30px; height: 80vh; overflow-y: auto;
-            position: relative;
+            padding: 30px; height: 75vh; overflow-y: auto;
+            position: relative; border-radius: 10px;
+            backdrop-filter: blur(25px);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
-        .report-content { font-size: 1.1rem; line-height: 1.7; color: #ddd; }
-        .report-content h1 { font-family: 'Orbitron'; color: var(--neon); font-size: 1.8rem; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .report-content h3 { color: #fff; margin: 25px 0 10px; background: rgba(255,255,255,0.05); padding: 5px; border-left: 3px solid var(--neon); }
-        .report-content a { color: #ff2a6d; text-decoration: none; font-weight: bold; }
+        .report-content { font-size: 1.1rem; line-height: 1.7; color: #eee; }
+        .report-content h1 { font-family: 'Orbitron'; color: var(--neon); font-size: 1.8rem; margin-bottom: 20px; border-bottom: 2px solid rgba(255,255,255,0.2); padding-bottom: 10px; }
+        .report-content h3 { color: #fff; margin: 25px 0 10px; background: rgba(0, 243, 255, 0.1); padding: 8px; border-left: 4px solid var(--neon); border-radius: 0 5px 5px 0; }
+        .report-content a { color: #ff2a6d; text-decoration: none; font-weight: bold; border-bottom: 1px dotted #ff2a6d; }
 
         /* LIKE BUTTON IN REPORT */
         .like-btn {
             position: absolute; top: 20px; right: 20px;
-            background: transparent; border: 1px solid #ff2a6d; color: #ff2a6d;
-            padding: 5px 15px; cursor: pointer; font-size: 0.9rem; transition: 0.3s;
+            background: rgba(0,0,0,0.6); border: 1px solid #ff2a6d; color: #ff2a6d;
+            padding: 8px 18px; cursor: pointer; font-size: 0.95rem; transition: 0.3s;
+            border-radius: 30px; display: flex; align-items: center; gap: 8px;
         }
-        .like-btn:hover, .like-btn.active { background: #ff2a6d; color: white; box-shadow: 0 0 15px #ff2a6d; }
+        .like-btn:hover, .like-btn.active { background: #ff2a6d; color: white; box-shadow: 0 0 20px #ff2a6d; }
 
         /* RIGHT: IMAGES */
         .visual-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px; height: 80vh; overflow-y: auto; padding-right: 5px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px; height: 75vh; overflow-y: auto; padding-right: 5px;
+            background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         .v-card {
-            border: 1px solid #333; height: 200px; position: relative; overflow: hidden;
-            transition: 0.3s; cursor: pointer;
+            border: 1px solid #444; height: 160px; position: relative; overflow: hidden;
+            transition: 0.3s; cursor: pointer; border-radius: 6px;
         }
-        .v-card:hover { border-color: var(--neon); transform: scale(0.98); }
+        .v-card:hover { border-color: var(--neon); transform: scale(1.05); z-index: 10; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
         .v-card img { width: 100%; height: 100%; object-fit: cover; }
         
         /* LOADER */
         .loader {
             position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.9); z-index: 1000;
+            background: rgba(0,0,0,0.95); z-index: 1000;
             display: none; align-items: center; justify-content: center;
             flex-direction: column;
         }
         .scan-line {
             width: 300px; height: 4px; background: var(--neon);
             box-shadow: 0 0 20px var(--neon);
-            animation: scan 2s infinite ease-in-out;
+            animation: scan 1.5s infinite ease-in-out;
         }
         .loading-text { margin-top: 20px; color: var(--neon); font-family: 'Orbitron'; letter-spacing: 2px; }
+        
         @keyframes scan { 0% { width: 0; } 50% { width: 300px; } 100% { width: 0; } }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         /* MOBILE */
         @media (max-width: 900px) {
-            .results-matrix { grid-template-columns: 1fr; }
+            .results-matrix { grid-template-columns: 1fr; height: auto; }
             .control-panel { flex-direction: column; }
             .select-group { flex-direction: column; }
+            .report-box, .visual-grid { height: 50vh; }
         }
     </style>
 </head>
 <body>
 
-    <div class="bg-anim"><div class="grid-lines"></div></div>
+    <video id="video-background" autoplay muted loop playsinline>
+        <source src="/static/background.mp4" type="video/mp4">
+        <style> body { background: #111; } </style>
+    </video>
+    <div class="overlay"></div>
 
     <div class="app-container">
         
@@ -152,7 +192,7 @@
             
             <div class="stat-badge">
                 <i class="fas fa-heart"></i>
-                <span id="likes-count">Initializing...</span>
+                <span id="likes-count">Loading...</span>
                 <span>USERS ATTRACTED</span>
             </div>
         </div>
@@ -184,7 +224,7 @@
                     <option value="tr-tr|Turkish">🇹🇷 Turkey</option>
                     <option value="id-id|Indonesian">🇮🇩 Indonesia</option>
                     <option value="pl-pl|Polish">🇵🇱 Poland</option>
-                    </select>
+                </select>
 
                 <select id="mode" class="cyber-select">
                     <option value="Deep Research">🧠 Deep Mind</option>
@@ -212,7 +252,7 @@
 
     <div class="loader" id="loader">
         <div class="scan-line"></div>
-        <div class="loading-text">ACCESSING SATELLITE FEEDS...</div>
+        <div class="loading-text">ESTABLISHING UPLINK...</div>
     </div>
 
     <script>
@@ -264,7 +304,7 @@
                         grid.innerHTML += `<div class="v-card" onclick="window.open('${img.src}', '_blank')"><img src="${img.src}" onerror="this.parentElement.style.display='none'"></div>`;
                     });
                 } else {
-                    grid.innerHTML = '<p style="padding:20px; color:#666;">No verified images found in this sector.</p>';
+                    grid.innerHTML = '<p style="padding:20px; color:#ccc;">No confirmed visual evidence found.</p>';
                 }
 
                 // Show
