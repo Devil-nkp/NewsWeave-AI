@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NewsWeave-Singularity")
 
 # API Key Strategy: Environment Variable Priority
-INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY")
 
 app = FastAPI()
 
@@ -627,3 +627,4 @@ Includes the **Comprehensive Country List**, **Compact Superbar**, and **Proper 
     </script>
 </body>
 </html>
+
