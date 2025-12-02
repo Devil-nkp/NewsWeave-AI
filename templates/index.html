@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Singularity v18</title>
+    <title>NewsWeave Singularity v19</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
@@ -20,7 +20,7 @@
         
         .social-proof { background: rgba(0,0,0,0.6); padding: 10px 25px; border-radius: 30px; border: 1px solid #333; font-size: 0.9rem; color: #aaa; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px); }
         .social-proof i { color: #ff6b6b; animation: pulse 1.5s infinite; }
-        .like-number { color: #00c6ff; font-weight: bold; font-size: 1.1rem; } /* Isolated Number */
+        .like-number { color: #00c6ff; font-weight: bold; font-size: 1.1rem; }
 
         .btn-start { padding: 15px 50px; font-size: 1.2rem; background: #007bff; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 0 20px rgba(0,123,255,0.4); }
         .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0,123,255,0.8); }
@@ -80,10 +80,10 @@
     <!-- LANDING -->
     <div class="container" id="p1">
         <h1 class="logo-lg">NEWSWEAVE</h1>
-        <p class="tagline">SINGULARITY INTELLIGENCE ENGINE v18.0</p>
+        <p class="tagline">SINGULARITY INTELLIGENCE ENGINE v19.0</p>
         <div class="social-proof">
             <i class="fas fa-heart"></i>
-            <!-- ISOLATED NUMBER -->
+            <!-- ISOLATED LIKE NUMBER -->
             <span class="like-number" id="landing-likes">{{ total_likes }}</span>
             <span>People attracted by our results</span>
         </div>
@@ -149,7 +149,7 @@
     <div class="fs-modal" id="fs-modal" onclick="this.style.display='none'"><span class="fs-close">&times;</span><img id="fs-img" src=""></div>
     <div class="help-modal" id="help-modal" onclick="if(event.target===this)this.style.display='none'">
         <div class="help-box">
-            <h3 style="color:#007bff; margin-bottom:15px;">System Manual v18</h3>
+            <h3 style="color:#007bff; margin-bottom:15px;">System Manual v19</h3>
             <p><strong>1. Infinity Catalog:</strong> Ask for "All crimes" or "List technologies" to get an exhaustive list.</p>
             <p><strong>2. Visual Trawl:</strong> The system retrieves 20-50 real images, filtering out AI art.</p>
             <p><strong>3. Aegis Protocol:</strong> Checks event existence before reporting.</p>
