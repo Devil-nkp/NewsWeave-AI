@@ -1,344 +1,392 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave-AI</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --neon: #00f3ff; 
-            --dark: #050505; 
-            --glass: rgba(0, 0, 0, 0.75); 
-            --border: rgba(255, 255, 255, 0.15);
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Rajdhani', sans-serif; }
-        
-        body { background: #000; color: #fff; overflow-x: hidden; min-height: 100vh; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsWeave Infinity v11</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- CORE --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #000; color: white; overflow-x: hidden; }
+        
+        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
 
-        /* --- VIDEO BACKGROUND ENGINE --- */
-        #video-background {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            z-index: -2;
-        }
+        /* LAYOUT */
+        .container { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.5s ease; }
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 1s ease forwards; }
+        
+        /* PAGE 1: LANDING */
+        .logo-lg { font-size: 5rem; font-weight: 900; letter-spacing: 5px; background: linear-gradient(90deg, #fff, #aaa); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 50px rgba(255,255,255,0.2); margin-bottom: 10px; }
+        .tagline { font-size: 1.2rem; color: #ccc; letter-spacing: 1px; margin-bottom: 40px; text-shadow: 0 2px 4px black; }
+        .btn-start { padding: 15px 50px; font-size: 1.2rem; background: #007bff; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 0 20px rgba(0,123,255,0.4); }
+        .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0,123,255,0.8); }
 
-        /* DARK OVERLAY (Makes text readable over video) */
-        .overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); /* Adjust opacity (0.1 - 0.9) to darken video */
-            z-index: -1;
-            backdrop-filter: blur(3px); /* Optional: slight blur for focus */
-        }
+        /* PAGE 2: COMMAND CENTER */
+        .search-wrapper { width: 100%; max-width: 900px; text-align: center; animation: fadeInUp 1s ease; }
+        
+        /* SUPER BAR (Compact & Powerful) */
+        .super-bar {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid #007bff;
+            border-radius: 50px;
+            padding: 5px 15px;
+            box-shadow: 0 0 40px rgba(0, 123, 255, 0.3);
+            height: 70px;
+        }
 
-        /* --- UI CONTAINER --- */
-        .app-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            padding: 0 15px;
+            outline: none;
+        }
+        .search-input::placeholder { color: #888; }
 
-        /* HEADER & STATS */
-        .header { margin-top: 10vh; text-align: center; width: 100%; animation: fadeIn 1.5s ease; }
-        .logo { 
-            font-family: 'Orbitron', sans-serif; 
-            font-size: 4rem; 
-            text-shadow: 0 0 20px var(--neon); 
-            letter-spacing: 5px; 
-            margin-bottom: 10px; 
-            background: linear-gradient(to bottom, #fff, #aaa);
-            -webkit-background-clip: text;
-            color: transparent;
-        }
-        .tagline { color: #ccc; letter-spacing: 4px; text-transform: uppercase; font-size: 1.2rem; font-weight: 700; }
+        /* DROPDOWNS */
+        .bar-select {
+            background: transparent;
+            color: #ccc;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            outline: none;
+            padding: 5px 5px;
+            font-weight: 600;
+            max-width: 130px;
+        }
+        .bar-select option { background: #000; color: white; }
+        
+        .icon-wrapper { 
+            display: flex; 
+            align-items: center; 
+            border-right: 1px solid rgba(255,255,255,0.2); 
+            padding-right: 10px; 
+            margin-right: 5px; 
+        }
+        .icon-wrapper i { color: #007bff; font-size: 1.1rem; margin-right: 5px; }
 
-        .stat-badge {
-            margin-top: 25px;
-            display: inline-flex; align-items: center; gap: 10px;
-            background: rgba(0, 243, 255, 0.15);
-            border: 1px solid var(--neon);
-            padding: 10px 25px; border-radius: 50px;
-            font-size: 1.1rem;
-            color: #fff;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
-            backdrop-filter: blur(10px);
-        }
-        .stat-badge i { color: #ff2a6d; animation: beat 1.5s infinite; }
-        @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .submit-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+            margin-left: 10px;
+            font-size: 1.2rem;
+        }
+        .submit-btn:hover { transform: scale(1.1); background: white; color: #007bff; }
 
-        /* CONTROL PANEL */
-        .control-panel {
-            width: 100%; max-width: 900px; margin-top: 50px;
-            background: var(--glass); 
-            border: 1px solid var(--border);
-            padding: 25px; border-radius: 15px;
-            display: flex; gap: 10px; flex-wrap: wrap;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            backdrop-filter: blur(20px);
-            animation: slideUp 1s ease 0.2s forwards; opacity: 0;
-        }
+        /* HELP LINK */
+        .help-link { margin-top: 15px; color: #aaa; cursor: pointer; font-size: 0.9rem; transition: 0.3s; text-shadow: 0 1px 2px black; }
+        .help-link:hover { color: #007bff; text-decoration: underline; }
 
-        .input-group { flex: 1; min-width: 300px; position: relative; }
-        .main-input {
-            width: 100%; padding: 15px 20px;
-            background: rgba(0,0,0,0.5); 
-            border: 1px solid #555; 
-            color: #fff;
-            font-size: 1.3rem; outline: none; transition: 0.3s;
-            border-radius: 5px;
-        }
-        .main-input:focus { border-color: var(--neon); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); background: rgba(0,0,0,0.8); }
+        /* RESULTS PAGE */
+        .results-wrapper { 
+            width: 100%; 
+            max-width: 1400px; /* Wider for more images */
+            margin-top: 40px; 
+            display: grid; 
+            grid-template-columns: 40% 60%; /* Text left, Massive Image Grid right */
+            gap: 30px; 
+            animation: fadeInUp 1s ease;
+        }
 
-        .select-group { display: flex; gap: 10px; }
-        .cyber-select {
-            background: rgba(0,0,0,0.8); color: #fff; border: 1px solid #555;
-            padding: 10px; font-size: 1rem; cursor: pointer; outline: none;
-            border-radius: 5px;
-        }
-        
-        .btn-launch {
-            background: var(--neon); color: #000; border: none;
-            padding: 0 35px; font-weight: 900; font-size: 1.2rem;
-            cursor: pointer; transition: 0.3s;
-            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-        }
-        .btn-launch:hover { background: #fff; box-shadow: 0 0 30px var(--neon); transform: scale(1.05); }
+        .card { background: rgba(10, 10, 10, 0.9); border: 1px solid #007bff; padding: 30px; border-radius: 20px; backdrop-filter: blur(20px); box-shadow: 0 0 40px rgba(0,0,0,0.8); max-height: 85vh; overflow-y: auto; }
+        
+        .report-content h3 { color: #007bff; margin: 25px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 1.4rem; }
+        .report-content p { line-height: 1.7; color: #eee; margin-bottom: 15px; font-size: 1.05rem; }
+        .report-content ul { padding-left: 20px; color: #ddd; }
+        .report-content li { margin-bottom: 8px; }
+        .report-content a { color: #ff6b6b; font-weight: bold; text-decoration: none; }
 
-        /* RESULTS MATRIX */
-        .results-matrix {
-            width: 100%; max-width: 1400px; margin-top: 40px;
-            display: grid; grid-template-columns: 40% 60%; gap: 25px;
-            opacity: 0; transform: translateY(20px); transition: 0.5s;
-        }
-        .results-matrix.active { opacity: 1; transform: translateY(0); }
+        /* INFINITY IMAGE GRID (High Density) */
+        .img-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+            gap: 10px; 
+            max-height: 85vh; 
+            overflow-y: auto; 
+            padding-right: 5px;
+        }
+        
+        .img-item { 
+            height: 120px; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            cursor: pointer; 
+            border: 1px solid #333; 
+            transition: 0.3s; 
+            position: relative; 
+        }
+        .img-item:hover { transform: scale(1.05); border-color: #007bff; z-index: 10; }
+        .img-item img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* FULLSCREEN MODAL */
+        .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
+        .fs-modal img { max-width: 95%; max-height: 95%; border-radius: 5px; box-shadow: 0 0 60px rgba(0,123,255,0.3); }
+        .fs-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 3rem; cursor: pointer; }
 
-        /* LEFT: REPORT */
-        .report-box {
-            background: var(--glass); border: 1px solid var(--neon);
-            padding: 30px; height: 75vh; overflow-y: auto;
-            position: relative; border-radius: 10px;
-            backdrop-filter: blur(25px);
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-        }
-        .report-content { font-size: 1.1rem; line-height: 1.7; color: #eee; }
-        .report-content h1 { font-family: 'Orbitron'; color: var(--neon); font-size: 1.8rem; margin-bottom: 20px; border-bottom: 2px solid rgba(255,255,255,0.2); padding-bottom: 10px; }
-        .report-content h3 { color: #fff; margin: 25px 0 10px; background: rgba(0, 243, 255, 0.1); padding: 8px; border-left: 4px solid var(--neon); border-radius: 0 5px 5px 0; }
-        .report-content a { color: #ff2a6d; text-decoration: none; font-weight: bold; border-bottom: 1px dotted #ff2a6d; }
+        /* HELP MODAL (Enhanced) */
+        .help-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .help-box { 
+            background: #0f0f0f; 
+            padding: 30px; 
+            border-radius: 15px; 
+            max-width: 700px; 
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid #007bff; 
+            color: white; 
+            line-height: 1.6; 
+            box-shadow: 0 0 50px rgba(0, 123, 255, 0.2); 
+        }
 
-        /* LIKE BUTTON IN REPORT */
-        .like-btn {
-            position: absolute; top: 20px; right: 20px;
-            background: rgba(0,0,0,0.6); border: 1px solid #ff2a6d; color: #ff2a6d;
-            padding: 8px 18px; cursor: pointer; font-size: 0.95rem; transition: 0.3s;
-            border-radius: 30px; display: flex; align-items: center; gap: 8px;
-        }
-        .like-btn:hover, .like-btn.active { background: #ff2a6d; color: white; box-shadow: 0 0 20px #ff2a6d; }
-
-        /* RIGHT: IMAGES */
-        .visual-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px; height: 75vh; overflow-y: auto; padding-right: 5px;
-            background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .v-card {
-            border: 1px solid #444; height: 160px; position: relative; overflow: hidden;
-            transition: 0.3s; cursor: pointer; border-radius: 6px;
-        }
-        .v-card:hover { border-color: var(--neon); transform: scale(1.05); z-index: 10; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
-        .v-card img { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* LOADER */
-        .loader {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.95); z-index: 1000;
-            display: none; align-items: center; justify-content: center;
-            flex-direction: column;
-        }
-        .scan-line {
-            width: 300px; height: 4px; background: var(--neon);
-            box-shadow: 0 0 20px var(--neon);
-            animation: scan 1.5s infinite ease-in-out;
-        }
-        .loading-text { margin-top: 20px; color: var(--neon); font-family: 'Orbitron'; letter-spacing: 2px; }
-        
-        @keyframes scan { 0% { width: 0; } 50% { width: 300px; } 100% { width: 0; } }
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* MOBILE */
-        @media (max-width: 900px) {
-            .results-matrix { grid-template-columns: 1fr; height: auto; }
-            .control-panel { flex-direction: column; }
-            .select-group { flex-direction: column; }
-            .report-box, .visual-grid { height: 50vh; }
-        }
-    </style>
+        /* LOADER */
+        .loader { display: none; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #007bff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 30px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 1000px) { .results-wrapper { grid-template-columns: 1fr; } .img-grid { max-height: 400px; } }
+    </style>
 </head>
 <body>
 
-    <video id="video-background" autoplay muted loop playsinline>
-        <source src="/static/background.mp4" type="video/mp4">
-        <style> body { background: #111; } </style>
-    </video>
-    <div class="overlay"></div>
+    <video id="video-background" autoplay muted loop playsinline>
+        <source src="/static/background.mp4" type="video/mp4">
+    </video>
 
-    <div class="app-container">
-        
-        <div class="header">
-            <div class="logo">NEWSWEAVE</div>
-            <div class="tagline">INFINITY INTELLIGENCE ENGINE V13</div>
-            
-            <div class="stat-badge">
-                <i class="fas fa-heart"></i>
-                <span id="likes-count">Loading...</span>
-                <span>USERS ATTRACTED</span>
-            </div>
-        </div>
+    <!-- PAGE 1: LANDING -->
+    <div class="container" id="p1">
+        <h1 class="logo-lg">NEWSWEAVE</h1>
+        <p class="tagline">INFINITY INTELLIGENCE ENGINE v11.0</p>
+        <button class="btn-start" onclick="navTo('p2')">INITIALIZE SYSTEM</button>
+    </div>
 
-        <div class="control-panel">
-            <div class="input-group">
-                <input type="text" id="topic" class="main-input" placeholder="Enter Command / Topic...">
-            </div>
-            
-            <div class="select-group">
-                <select id="region-selector" class="cyber-select">
-                    <option value="wt-wt|English (Global)" selected>🌍 Global (English)</option>
-                    <option value="us-en|English (USA)">🇺🇸 USA</option>
-                    <option value="in-en|English (India)">🇮🇳 India (English)</option>
-                    <option value="in-hi|Hindi">🇮🇳 India (Hindi)</option>
-                    <option value="cn-zh|Chinese">🇨🇳 China (Mandarin)</option>
-                    <option value="es-es|Spanish">🇪🇸 Spain (Spanish)</option>
-                    <option value="mx-es|Spanish (Mexico)">🇲🇽 Mexico</option>
-                    <option value="fr-fr|French">🇫🇷 France</option>
-                    <option value="de-de|German">🇩🇪 Germany</option>
-                    <option value="jp-jp|Japanese">🇯🇵 Japan</option>
-                    <option value="ru-ru|Russian">🇷🇺 Russia</option>
-                    <option value="br-pt|Portuguese">🇧🇷 Brazil</option>
-                    <option value="ae-ar|Arabic">🇦🇪 UAE (Arabic)</option>
-                    <option value="kr-kr|Korean">🇰🇷 South Korea</option>
-                    <option value="it-it|Italian">🇮🇹 Italy</option>
-                    <option value="nl-nl|Dutch">🇳🇱 Netherlands</option>
-                    <option value="se-sv|Swedish">🇸🇪 Sweden</option>
-                    <option value="tr-tr|Turkish">🇹🇷 Turkey</option>
-                    <option value="id-id|Indonesian">🇮🇩 Indonesia</option>
-                    <option value="pl-pl|Polish">🇵🇱 Poland</option>
-                </select>
+    <!-- PAGE 2: COMMAND CENTER -->
+    <div class="container hidden" id="p2" style="justify-content: flex-start; padding-top: 10vh;">
+        <div class="search-wrapper">
+            <h2 style="margin-bottom: 25px; text-shadow: 0 2px 4px black; font-weight: 700;">GLOBAL COMMAND</h2>
+            
+            <!-- SUPER BAR -->
+            <div class="super-bar">
+                <!-- Region -->
+                <div class="icon-wrapper">
+                    <i class="fas fa-globe"></i>
+                    <select id="region" class="bar-select">
+                        <option value="Global">🌍 Global</option>
+                        <option value="USA">🇺🇸 USA</option>
+                        <option value="India">🇮🇳 India</option>
+                        <option value="UK">🇬🇧 UK</option>
+                        <option value="Argentina">🇦🇷 Argentina</option>
+                        <option value="Australia">🇦🇺 Australia</option>
+                        <option value="Austria">🇦🇹 Austria</option>
+                        <option value="Belgium (fr)">🇧🇪 Belgium (FR)</option>
+                        <option value="Belgium (nl)">🇧🇪 Belgium (NL)</option>
+                        <option value="Brazil">🇧🇷 Brazil</option>
+                        <option value="Bulgaria">🇧🇬 Bulgaria</option>
+                        <option value="Canada (en)">🇨🇦 Canada (EN)</option>
+                        <option value="Canada (fr)">🇨🇦 Canada (FR)</option>
+                        <option value="Chile">🇨🇱 Chile</option>
+                        <option value="China">🇨🇳 China</option>
+                        <option value="Colombia">🇨🇴 Colombia</option>
+                        <option value="Croatia">🇭🇷 Croatia</option>
+                        <option value="Czech Republic">🇨🇿 Czech Rep</option>
+                        <option value="Denmark">🇩🇰 Denmark</option>
+                        <option value="Estonia">🇪🇪 Estonia</option>
+                        <option value="Finland">🇫🇮 Finland</option>
+                        <option value="France">🇫🇷 France</option>
+                        <option value="Germany">🇩🇪 Germany</option>
+                        <option value="Greece">🇬🇷 Greece</option>
+                        <option value="Hong Kong">🇭🇰 Hong Kong</option>
+                        <option value="Hungary">🇭🇺 Hungary</option>
+                        <option value="Indonesia">🇮🇩 Indonesia</option>
+                        <option value="Ireland">🇮🇪 Ireland</option>
+                        <option value="Israel">🇮🇱 Israel</option>
+                        <option value="Italy">🇮🇹 Italy</option>
+                        <option value="Japan">🇯🇵 Japan</option>
+                        <option value="Korea">🇰🇷 Korea</option>
+                        <option value="Latvia">🇱🇻 Latvia</option>
+                        <option value="Lithuania">🇱🇹 Lithuania</option>
+                        <option value="Malaysia">🇲🇾 Malaysia</option>
+                        <option value="Mexico">🇲🇽 Mexico</option>
+                        <option value="Netherlands">🇳🇱 Netherlands</option>
+                        <option value="New Zealand">🇳🇿 New Zealand</option>
+                        <option value="Norway">🇳🇴 Norway</option>
+                        <option value="Pakistan">🇵🇰 Pakistan</option>
+                        <option value="Peru">🇵🇪 Peru</option>
+                        <option value="Philippines">🇵🇭 Philippines</option>
+                        <option value="Poland">🇵🇱 Poland</option>
+                        <option value="Portugal">🇵🇹 Portugal</option>
+                        <option value="Romania">🇷🇴 Romania</option>
+                        <option value="Russia">🇷🇺 Russia</option>
+                        <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+                        <option value="Singapore">🇸🇬 Singapore</option>
+                        <option value="Slovakia">🇸🇰 Slovakia</option>
+                        <option value="Slovenia">🇸🇮 Slovenia</option>
+                        <option value="South Africa">🇿🇦 South Africa</option>
+                        <option value="Spain">🇪🇸 Spain</option>
+                        <option value="Sweden">🇸🇪 Sweden</option>
+                        <option value="Switzerland (de)">🇨🇭 Switzerland (DE)</option>
+                        <option value="Switzerland (fr)">🇨🇭 Switzerland (FR)</option>
+                        <option value="Taiwan">🇹🇼 Taiwan</option>
+                        <option value="Thailand">🇹🇭 Thailand</option>
+                        <option value="Turkey">🇹🇷 Turkey</option>
+                        <option value="Ukraine">🇺🇦 Ukraine</option>
+                        <option value="Vietnam">🇻🇳 Vietnam</option>
+                    </select>
+                </div>
 
-                <select id="mode" class="cyber-select">
-                    <option value="Deep Research">🧠 Deep Mind</option>
-                    <option value="Fact Check">🛡️ Verify Truth</option>
-                    <option value="Market Analysis">📈 Market Data</option>
-                    <option value="Creative">🎨 Creative</option>
-                </select>
-            </div>
+                <!-- Mode -->
+                <div class="icon-wrapper">
+                    <i class="fas fa-brain"></i>
+                    <select id="mode" class="bar-select">
+                        <option value="Auto">Auto</option>
+                        <option value="Catalog">Catalog/List</option>
+                        <option value="Fact Check">Verify</option>
+                        <option value="Deep Research">Deep Dive</option>
+                        <option value="Market Analysis">Market</option>
+                    </select>
+                </div>
 
-            <button class="btn-launch" onclick="ignite()">EXECUTE</button>
-        </div>
+                <input type="text" id="topic" class="search-input" placeholder="Ex: 'List all emerging AI tools'...">
+                
+                <button class="submit-btn" onclick="runScan()"><i class="fas fa-arrow-up"></i></button>
+            </div>
 
-        <div class="results-matrix" id="matrix">
-            <div class="report-box">
-                <button class="like-btn" id="like-btn" onclick="sendLike()">
-                    <i class="fas fa-heart"></i> Like Result
-                </button>
-                <div class="report-content" id="report-text"></div>
-            </div>
+            <div class="help-link" onclick="document.getElementById('help-modal').style.display='flex'">System Capabilities & Usage</div>
+            <div class="loader" id="loader"></div>
+        </div>
 
-            <div class="visual-grid" id="img-grid"></div>
-        </div>
+        <!-- RESULTS AREA -->
+        <div class="results-wrapper hidden" id="results-area">
+            <!-- REPORT -->
+            <div class="card">
+                <div id="report-content" class="report-content"></div>
+            </div>
+            
+            <!-- INFINITY IMAGES -->
+            <div class="img-grid" id="img-grid"></div>
+        </div>
+    </div>
 
-    </div>
+    <!-- FULLSCREEN IMAGE MODAL -->
+    <div class="fs-modal" id="fs-modal" onclick="this.style.display='none'">
+        <span class="fs-close">&times;</span>
+        <img id="fs-img" src="" alt="Fullscreen">
+    </div>
 
-    <div class="loader" id="loader">
-        <div class="scan-line"></div>
-        <div class="loading-text">ESTABLISHING UPLINK...</div>
-    </div>
+    <!-- HELP MODAL (Enhanced) -->
+    <div class="help-modal" id="help-modal" onclick="if(event.target===this)this.style.display='none'">
+        <div class="help-box">
+            <h2 style="color:#007bff; margin-bottom:15px; border-bottom: 1px solid #333; padding-bottom: 10px;">SYSTEM MANUAL & USAGE GUIDE</h2>
+            
+            <div style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+                <h4 style="color:white; margin-top:15px;"> What is NewsWeave?</h4>
+                <p style="font-size:0.95rem; color:#ccc; margin-bottom:15px;">
+                    NewsWeave is an autonomous <strong>Forensic Intelligence Agent</strong>. Unlike standard search engines that provide links, NewsWeave reads, verifies, and synthesizes data into a comprehensive dossier. It uses a multi-vector search engine to cross-reference facts, debunk rumors, and gather real-time market data.
+                </p>
 
-    <script>
-        // ON LOAD: Get Stats
-        window.addEventListener('load', async () => {
-            try {
-                const res = await fetch('/stats');
-                const data = await res.json();
-                document.getElementById('likes-count').innerText = data.likes.toLocaleString();
-            } catch(e) { console.log('Stats offline'); }
-        });
+                <h4 style="color:white; margin-top:15px;"> How to Operate</h4>
+                <ol style="margin-left:20px; color:#ccc; font-size:0.95rem; margin-bottom:15px; line-height:1.6;">
+                    <li><strong>Select Region ():</strong> Click the Globe icon. Choose your target country (e.g., 'India' for INR currency & local laws, 'USA' for federal data).</li>
+                    <li><strong>Select Intelligence Mode ():</strong> Click the Brain icon. Choose how the AI should think (see modes below).</li>
+                    <li><strong>Input Parameter:</strong> Type your query in the Superbar. Be specific for best results.</li>
+                    <li><strong>Execute:</strong> Click the Blue Arrow to launch the investigation.</li>
+                </ol>
 
-        async function ignite() {
-            const topic = document.getElementById('topic').value;
-            const regionData = document.getElementById('region-selector').value.split('|');
-            const regionCode = regionData[0];
-            const langName = regionData[1];
-            const mode = document.getElementById('mode').value;
+                <h4 style="color:white; margin-top:15px;"> Intelligence Modes</h4>
+                <ul style="margin-left:20px; color:#ccc; font-size:0.95rem; margin-bottom:15px; line-height:1.6;">
+                    <li><strong>Auto:</strong> The AI analyzes your prompt and picks the best strategy automatically.</li>
+                    <li><strong>Catalog / List:</strong> Forces the AI to generate exhaustive lists (e.g., "List all new cyber crimes").</li>
+                    <li><strong>Fact Check:</strong> rigorous verification protocol. Perfect for rumors, hoaxes, or "too good to be true" news.</li>
+                    <li><strong>Market Analysis:</strong> Hunts for financial tickers, revenue reports, and economic growth stats.</li>
+                    <li><strong>Deep Research:</strong> The standard "All-Rounder" mode for deep context and history.</li>
+                </ul>
 
-            if(!topic) return alert("INPUT REQUIRED");
+                <h4 style="color:white; margin-top:15px;"> Sample Prompts</h4>
+                <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; color:#00c6ff; font-family:monospace; font-size:0.9rem;">
+                    • "List all emerging AI video tools released in 2025" (Catalog)<br>
+                    • "Is the 'WhatsApp Gold' virus warning real?" (Fact Check)<br>
+                    • "Reliance Industries Q4 2025 revenue analysis" (Market - India)<br>
+                    • "Impact of new H1B visa rules on tech sector" (Deep Research - USA)
+                </div>
+            </div>
+            <br>
+            <button class="btn-start" style="padding:10px 30px; font-size:1rem; width:100%;" onclick="document.getElementById('help-modal').style.display='none'">Close Manual</button>
+        </div>
+    </div>
 
-            // UI State
-            document.getElementById('loader').style.display = 'flex';
-            document.getElementById('matrix').classList.remove('active');
-            
-            // Reset Like Button
-            const likeBtn = document.getElementById('like-btn');
-            likeBtn.classList.remove('active');
-            likeBtn.innerHTML = '<i class="fas fa-heart"></i> Like Result';
-            likeBtn.disabled = false;
+    <script>
+        function navTo(id) {
+            document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('fade-in');
+        }
 
-            try {
-                const res = await fetch('/analyze', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ topic, region_code: regionCode, language_name: langName, mode })
-                });
+        async function runScan() {
+            const topic = document.getElementById('topic').value;
+            const region = document.getElementById('region').value;
+            const mode = document.getElementById('mode').value;
 
-                const data = await res.json();
+            if(!topic) return alert("Enter a topic.");
 
-                // Inject Text
-                document.getElementById('report-text').innerHTML = data.report;
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('results-area').classList.add('hidden');
 
-                // Inject Images
-                const grid = document.getElementById('img-grid');
-                grid.innerHTML = '';
-                if(data.images.length > 0) {
-                    data.images.forEach(img => {
-                        grid.innerHTML += `<div class="v-card" onclick="window.open('${img.src}', '_blank')"><img src="${img.src}" onerror="this.parentElement.style.display='none'"></div>`;
-                    });
-                } else {
-                    grid.innerHTML = '<p style="padding:20px; color:#ccc;">No confirmed visual evidence found.</p>';
-                }
+            try {
+                const res = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ topic, region, mode })
+                });
+                
+                const data = await res.json();
 
-                // Show
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('matrix').classList.add('active');
+                // Render Text
+                document.getElementById('report-content').innerHTML = data.report;
 
-            } catch(e) {
-                document.getElementById('loader').style.display = 'none';
-                alert("SYSTEM FAILURE. CHECK CONNECTION.");
-            }
-        }
+                // Render Images (Massive Grid)
+                const grid = document.getElementById('img-grid');
+                grid.innerHTML = '';
+                data.images.forEach(img => {
+                    grid.innerHTML += `<div class="img-item" onclick="openFS('${img.src}')">
+                        <img src="${img.src}" onerror="this.parentElement.style.display='none'">
+                    </div>`;
+                });
 
-        async function sendLike() {
-            const btn = document.getElementById('like-btn');
-            if(btn.disabled) return;
+                document.getElementById('results-area').classList.remove('hidden');
 
-            try {
-                const res = await fetch('/like', {method: 'POST'});
-                const data = await res.json();
-                
-                // Update Global Counter
-                document.getElementById('likes-count').innerText = data.likes.toLocaleString();
-                
-                // Update Button
-                btn.innerHTML = 'Liked <i class="fas fa-check"></i>';
-                btn.classList.add('active');
-                btn.disabled = true;
-            } catch(e) { console.log('Like failed'); }
-        }
+            } catch(e) {
+                alert("System Offline.");
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
 
-        // Enter Key
-        document.getElementById('topic').addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') ignite();
-        });
-    </script>
+        function openFS(src) {
+            document.getElementById('fs-img').src = src;
+            document.getElementById('fs-modal').style.display = 'flex';
+        }
+
+        document.getElementById('topic').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') runScan();
+        });
+    </script>
 </body>
 </html>
