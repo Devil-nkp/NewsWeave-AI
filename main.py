@@ -17,9 +17,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 # --- DEPLOYMENT CONFIGURATION ---
 # On Render, set these in the "Environment" tab.
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "YOUR_FALLBACK_KEY_IF_LOCAL")
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
-EMAIL_PASS = os.environ.get("EMAIL_PASS", "") 
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
+EMAIL_PASS = os.environ.get("EMAIL_PASS") 
 
 # STORAGE PATH (Crucial for Render Persistence)
 # On Render, mount a disk to /var/data to keep likes forever.
@@ -200,3 +200,4 @@ if __name__ == "__main__":
     # Render requires port from env, default 10000
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
