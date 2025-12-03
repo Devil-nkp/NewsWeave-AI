@@ -17,20 +17,16 @@ from textblob import TextBlob
 import pandas as pd
 import plotly.express as px
 import plotly.utils
+from collections import Counter
 
-# --- SYSTEM CONFIGURATION ---
+# --- CONFIGURATION ---
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("NewsWeave-v22")
+logger = logging.getLogger("NewsWeave-Singularity-v21")
 
-# API Key Strategy
 INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY")
 
 app = FastAPI()
-
-# Mount Static Files (Create a folder named 'static' if you have local videos)
-os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
 templates = Jinja2Templates(directory="templates")
 
 # --- PERSISTENCE DB ---
@@ -53,7 +49,7 @@ def save_stats(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f)
 
-# --- GLOBAL REGION MAP (50+ Countries) ---
+# --- EXTENSIVE GLOBAL REGION MAP (60+ Countries) ---
 REGION_MAP = {
     "Global": "wt-wt", "USA": "us-en", "India": "in-en", "UK": "uk-en",
     "Argentina": "ar-es", "Australia": "au-en", "Austria": "at-de",
@@ -86,40 +82,70 @@ class SearchRequest(BaseModel):
 
 class SingularityAgent:
     def __init__(self):
+        # Temp 0.0 for absolute precision
         self.llm = ChatGroq(temperature=0.0, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY)
         self.date_str = datetime.now().strftime("%B %d, %Y")
 
     def _determine_mode(self, topic):
         t = topic.lower()
-        if any(x in t for x in ['all', 'list', 'types', 'catalog', 'every', 'classification']):
+        if any(x in t for x in ['all', 'list', 'types', 'catalog', 'every', 'classification', 'top 10']):
             return "Catalog"
-        if any(x in t for x in ['stock', 'price', 'market', 'growth', 'economy', 'revenue']):
+        if any(x in t for x in ['stock', 'price', 'market', 'growth', 'economy', 'revenue', 'gdp']):
             return "Market Analysis"
-        if any(x in t for x in ['fake', 'real', 'true', 'hoax', 'fact', 'verify']):
+        if any(x in t for x in ['fake', 'real', 'true', 'hoax', 'scam', 'fact', 'verify']):
             return "Fact Check"
         return "Deep Research"
 
-    def _smart_image_sweep(self, topic, region_code):
-        """Hunts for 20+ Real Images"""
+    def _extract_specific_visual_queries(self, topic, vault_text):
+        """
+        Advanced Logic: Reads the text results to extract Specific Nouns for image searching.
+        This ensures images are 'Particular', not generic.
+        """
+        # 1. Start with the main topic
+        queries = [f"{topic} real life photo", f"{topic} official event"]
+        
+        # 2. Extract potential proper nouns or key terms from the vault (Simple heuristic)
+        # We look for capitalized words that appear frequently in the search results
+        words = re.findall(r'\b[A-Z][a-z]+\b', vault_text)
+        common_entities = [word for word, count in Counter(words).most_common(3) if len(word) > 3]
+        
+        # 3. Add specific queries based on found entities
+        for entity in common_entities:
+            if entity.lower() not in topic.lower():
+                queries.append(f"{topic} {entity} photo")
+        
+        return queries
+
+    def _smart_image_sweep(self, topic, region_code, vault_text):
+        """
+        VISUAL TRAWL v2: Uses extracted context to find 20-50 specific images.
+        """
         gallery = []
         seen = set()
-        blacklist = ["ai generated", "cartoon", "vector", "drawing", "clipart", "logo", "icon"]
+        blacklist = ["ai generated", "cartoon", "vector", "drawing", "clipart", "logo", "icon", "render", "3d", "illustration", "sketch", "stock"]
         
-        queries = [f"{topic} news photo", f"{topic} real life", f"{topic} event", f"{topic} official"]
+        # Use the new specific query generator
+        queries = self._extract_specific_visual_queries(topic, vault_text)
         
         try:
             with DDGS() as ddgs:
                 for q in queries:
-                    if len(gallery) >= 30: break
+                    if len(gallery) >= 50: break
                     try:
+                        # High volume fetch
                         results = list(ddgs.images(q, region=region_code, max_results=20))
                         for r in results:
-                            if len(gallery) >= 30: break
-                            t = r.get('title', '').lower()
+                            if len(gallery) >= 50: break
+                            
+                            title = r.get('title', '').lower()
                             src = r.get('image', '')
-                            if src not in seen and not any(b in t for b in blacklist):
-                                gallery.append({"src": src, "title": r['title']})
-                                seen.add(src)
+                            
+                            # Strict Filtering
+                            if src in seen: continue
+                            if any(b in title for b in blacklist): continue
+                            
+                            gallery.append({"src": src, "title": r['title']})
+                            seen.add(src)
                     except: continue
                     time.sleep(0.1)
         except Exception as e:
@@ -127,33 +153,39 @@ class SingularityAgent:
             
         return gallery
 
+    def _safe_search(self, query, region_code, backend='api', limit=5):
+        """Retry logic for search"""
+        for attempt in range(3):
+            try:
+                with DDGS() as ddgs:
+                    if backend == 'news': return list(ddgs.news(query, region=region_code, max_results=limit))
+                    else: return list(ddgs.text(query, region=region_code, backend=backend, max_results=limit))
+            except:
+                time.sleep(0.5)
+        return []
+
     def _execute_polymorphic_search(self, topic, region, mode):
         region_code = REGION_MAP.get(region, "wt-wt")
         active_mode = self._determine_mode(topic) if mode == "Auto" else mode
         
-        strategies = [f"{topic} latest news", f"{topic} analysis"]
+        strategies = [f"{topic} latest news", f"{topic} analysis details"]
         if active_mode == "Catalog":
-            strategies = [f"list of all {topic}", f"types of {topic} details"]
+            strategies = [f"list of all {topic}", f"types of {topic} detailed list", f"full classification {topic}"]
         elif active_mode == "Fact Check":
-            strategies = [f"is {topic} true", f"{topic} official fact check"]
+            strategies = [f"is {topic} true", f"{topic} official fact check", f"{topic} debunked"]
+        elif active_mode == "Market Analysis":
+             strategies = [f"{topic} market size {datetime.now().year}", f"{topic} financial report", f"{topic} growth statistics"]
             
         vault = ""
-        try:
-            with DDGS() as ddgs:
-                for q in strategies:
-                    # Try News
-                    try:
-                        news = list(ddgs.news(q, region=region_code, max_results=5))
-                        for r in news: vault += f"SOURCE: {r['title']} ({r['date']})\nLINK: {r['url']}\nINFO: {r['body']}\n\n"
-                    except: pass
-                    
-                    # Try Text (Fallback)
-                    if len(vault) < 1000:
-                        try:
-                            text = list(ddgs.text(q, region=region_code, backend="lite", max_results=6))
-                            for r in text: vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nINFO: {r['body']}\n\n"
-                        except: pass
-        except: pass
+        for q in strategies:
+            # News Backend
+            results = self._safe_search(q, region_code, backend='news', limit=5)
+            for r in results: vault += f"SOURCE: {r['title']} ({r['date']})\nLINK: {r['url']}\nINFO: {r['body']}\n\n"
+            
+            # Text Backend (Deep Search)
+            if len(vault) < 2000:
+                results = self._safe_search(q, region_code, backend='lite', limit=8)
+                for r in results: vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nINFO: {r['body']}\n\n"
         
         return vault, active_mode, region_code
 
@@ -171,43 +203,66 @@ class SingularityAgent:
                     except: pass
                 if clean_years:
                     df = pd.DataFrame({"Year": clean_years, "Value": clean_nums})
-                    try: fig = px.scatter(df, x="Year", y="Value", title="Data Trend", trendline="ols", template="plotly_dark")
-                    except: fig = px.scatter(df, x="Year", y="Value", title="Data Trend", template="plotly_dark")
+                    try:
+                        fig = px.scatter(df, x="Year", y="Value", title="Data Trend Analysis", trendline="ols", template="plotly_dark")
+                    except:
+                        fig = px.scatter(df, x="Year", y="Value", title="Data Trend Analysis", template="plotly_dark")
                     return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         except: pass
         return None
 
     def generate_report(self, topic, region, mode):
+        # 1. Persistence
         s = load_stats()
         s["prompts_today"] += 1; s["total_prompts"] += 1
         save_stats(s)
 
+        # 2. Gather
         context, resolved_mode, region_code = self._execute_polymorphic_search(topic, region, mode)
         if not context:
             try: context = f"WIKIPEDIA: {wikipedia.summary(topic, sentences=10)}"
             except: return "⚠️ No verifiable data found.", [], None
 
-        instruction = "Structure: <h3>Executive Verdict</h3>, <h3>Deep Dive Analysis</h3>, <h3>Key Evidence</h3>."
-        if resolved_mode == "Catalog": instruction = "CATALOG MODE: List EVERY item found. Bullet points."
-        elif resolved_mode == "Fact Check": instruction = "VERIFICATION MODE: State VERIFIED or DEBUNKED immediately."
+        # 3. Synthesize
+        instruction = ""
+        if resolved_mode == "Catalog":
+            instruction = "CATALOG MODE: List EVERY item found. Use bullet points. Format: <b>Item Name:</b> Concise description."
+        elif resolved_mode == "Fact Check":
+            instruction = "VERIFICATION MODE: State VERIFIED or DEBUNKED immediately."
+        else:
+            instruction = "Structure: <h3>Executive Verdict</h3>, <h3>Deep Dive Analysis</h3>, <h3>Key Evidence</h3>, <h3>Strategic Outlook</h3>."
 
         prompt = f"""
         You are NewsWeave Singularity. TOPIC: {topic} | MODE: {resolved_mode} | REGION: {region}
-        DATA: {context}
+        DATE: {self.date_str}
+        
+        INTELLIGENCE VAULT:
+        {context}
+        
         INSTRUCTIONS:
         1. {instruction}
-        2. **Citations:** <a href='URL' target='_blank' style='color:#00c6ff'>[Source]</a>.
-        3. **No Hallucinations:** Verify facts against the vault.
-        4. Use HTML tags.
+        2. **Citations:** <a href='URL' target='_blank' style='color:#00c6ff; text-decoration:none;'>[Source]</a>.
+        3. **Polished Writing:** Use professional, investigative journalism tone.
+        4. **No Hallucinations:** If data is missing, say so.
+        5. Use HTML tags.
         """
-        try: report = self.llm.invoke(prompt).content
-        except Exception as e: report = f"AI Error: {e}"
+        
+        try:
+            report = self.llm.invoke(prompt).content
+        except Exception as e:
+            report = f"<p style='color:red'>AI Core Error: {str(e)}</p>"
 
-        images = self._smart_image_sweep(topic, region_code)
+        # 4. Assets (Visual Trawl uses the Context Vault now!)
+        images = self._smart_image_sweep(topic, region_code, context)
         chart = self._generate_chart(report)
+        
         return report, images, chart
 
 agent = SingularityAgent()
+
+# ==========================================
+# 🌐 API ROUTES
+# ==========================================
 
 @app.get("/")
 async def serve_interface(request: Request):
@@ -228,4 +283,3 @@ async def like_endpoint():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
