@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Singularity v22</title>
+    <title>NewsWeave Singularity v21</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
@@ -75,15 +75,15 @@
     </style>
 </head>
 <body>
-    <!-- Ensure you have a background.mp4 in a static folder or use a public link -->
     <video id="video-background" autoplay muted loop playsinline><source src="/static/background.mp4" type="video/mp4"></video>
 
     <!-- LANDING -->
     <div class="container" id="p1">
         <h1 class="logo-lg">NEWSWEAVE</h1>
-        <p class="tagline">SINGULARITY INTELLIGENCE ENGINE v22.0</p>
+        <p class="tagline">SINGULARITY INTELLIGENCE ENGINE v21.0</p>
         <div class="social-proof">
             <i class="fas fa-heart"></i>
+            <!-- ISOLATED LIKE NUMBER -->
             <span class="like-number" id="landing-likes">{{ total_likes }}</span>
             <span>People attracted by our results</span>
         </div>
@@ -96,7 +96,7 @@
             <h2 style="margin-bottom: 25px; text-shadow: 0 2px 4px black; font-weight: 700;">GLOBAL COMMAND</h2>
             <div class="super-bar">
                 <div class="icon-wrapper"><i class="fas fa-globe"></i>
-                    <!-- 50+ COUNTRY LIST -->
+                    <!-- FULL COUNTRY LIST (50+ ENTRIES) -->
                     <select id="region" class="bar-select">
                         <option value="Global">Global</option><option value="USA">USA</option><option value="India">India</option><option value="UK">UK</option>
                         <option value="Argentina">Argentina</option><option value="Australia">Australia</option><option value="Austria">Austria</option>
@@ -111,13 +111,9 @@
                         <option value="Japan">Japan</option><option value="Korea">Korea</option><option value="Latvia">Latvia</option>
                         <option value="Lithuania">Lithuania</option><option value="Malaysia">Malaysia</option><option value="Mexico">Mexico</option>
                         <option value="Netherlands">Netherlands</option><option value="New Zealand">New Zealand</option><option value="Norway">Norway</option>
-                        <option value="Pakistan">Pakistan</option><option value="Peru">Peru</option><option value="Philippines">Philippines</option>
-                        <option value="Poland">Poland</option><option value="Portugal">Portugal</option><option value="Romania">Romania</option>
-                        <option value="Russia">Russia</option><option value="Saudi Arabia">Saudi Arabia</option><option value="Singapore">Singapore</option>
-                        <option value="Slovakia">Slovakia</option><option value="Slovenia">Slovenia</option><option value="South Africa">South Africa</option>
-                        <option value="Spain">Spain</option><option value="Sweden">Sweden</option><option value="Switzerland (de)">Switzerland (DE)</option>
-                        <option value="Switzerland (fr)">Switzerland (FR)</option><option value="Taiwan">Taiwan</option><option value="Thailand">Thailand</option>
-                        <option value="Turkey">Turkey</option><option value="Ukraine">Ukraine</option><option value="Vietnam">Vietnam</option>
+                        <option value="Pakistan">Pakistan</option><option value="Peru">Peru</option><option value="Philippines">Philippines</option><option value="Poland">Poland</option><option value="Portugal">Portugal</option><option value="Romania">Romania</option><option value="Russia">Russia</option>
+                        <option value="Saudi Arabia">Saudi Arabia</option><option value="Singapore">Singapore</option><option value="Slovakia">Slovakia</option>
+                        <option value="Slovenia">Slovenia</option><option value="South Africa">South Africa</option><option value="Spain">Spain</option><option value="Sweden">Sweden</option><option value="Switzerland (de)">Switzerland (DE)</option><option value="Switzerland (fr)">Switzerland (FR)</option><option value="Taiwan">Taiwan</option><option value="Thailand">Thailand</option><option value="Turkey">Turkey</option><option value="Ukraine">Ukraine</option><option value="Vietnam">Vietnam</option>
                     </select>
                 </div>
                 <div class="icon-wrapper"><i class="fas fa-brain"></i><select id="mode" class="bar-select"><option value="Auto">Auto</option><option value="Catalog">Catalog</option><option value="Fact Check">Verify</option><option value="Deep Research">Deep</option><option value="Market Analysis">Market</option></select></div>
@@ -149,7 +145,7 @@
     <div class="fs-modal" id="fs-modal" onclick="this.style.display='none'"><span class="fs-close">&times;</span><img id="fs-img" src=""></div>
     <div class="help-modal" id="help-modal" onclick="if(event.target===this)this.style.display='none'">
         <div class="help-box">
-            <h3 style="color:#007bff; margin-bottom:15px;">System Manual v22</h3>
+            <h3 style="color:#007bff; margin-bottom:15px;">System Manual v21</h3>
             <p><strong>1. Infinity Catalog:</strong> Ask for "All crimes" or "List technologies" to get an exhaustive list.</p>
             <p><strong>2. Visual Trawl:</strong> The system retrieves 20-50 real images, filtering out AI art.</p>
             <p><strong>3. Aegis Protocol:</strong> Checks event existence before reporting.</p>
