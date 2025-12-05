@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Infinity v13</title>
+    <title>NewsWeave Infinity v11</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> <style>
+    <style>
         /* --- CORE --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #000; color: white; overflow-x: hidden; }
         
-        /* Fallback background if video fails */
-        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; background: #050505; }
+        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
 
         /* LAYOUT */
         .container { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.5s ease; }
@@ -98,7 +97,7 @@
         /* RESULTS PAGE */
         .results-wrapper { 
             width: 100%; 
-            max-width: 1600px; /* Wider for more images */
+            max-width: 1400px; /* Wider for more images */
             margin-top: 40px; 
             display: grid; 
             grid-template-columns: 40% 60%; /* Text left, Massive Image Grid right */
@@ -117,15 +116,15 @@
         /* INFINITY IMAGE GRID (High Density) */
         .img-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-            gap: 12px; 
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+            gap: 10px; 
             max-height: 85vh; 
             overflow-y: auto; 
             padding-right: 5px;
         }
         
         .img-item { 
-            height: 140px; 
+            height: 120px; 
             border-radius: 8px; 
             overflow: hidden; 
             cursor: pointer; 
@@ -136,9 +135,6 @@
         .img-item:hover { transform: scale(1.05); border-color: #007bff; z-index: 10; }
         .img-item img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* CHART CONTAINER */
-        #chart-container { margin-top: 20px; height: 300px; width: 100%; }
-
         /* FULLSCREEN MODAL */
         .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
         .fs-modal img { max-width: 95%; max-height: 95%; border-radius: 5px; box-shadow: 0 0 60px rgba(0,123,255,0.3); }
@@ -175,17 +171,21 @@
         <source src="/static/background.mp4" type="video/mp4">
     </video>
 
+    <!-- PAGE 1: LANDING -->
     <div class="container" id="p1">
         <h1 class="logo-lg">NEWSWEAVE</h1>
-        <p class="tagline">INFINITY INTELLIGENCE ENGINE v13.0</p>
+        <p class="tagline">INFINITY INTELLIGENCE ENGINE v11.0</p>
         <button class="btn-start" onclick="navTo('p2')">INITIALIZE SYSTEM</button>
     </div>
 
+    <!-- PAGE 2: COMMAND CENTER -->
     <div class="container hidden" id="p2" style="justify-content: flex-start; padding-top: 10vh;">
         <div class="search-wrapper">
             <h2 style="margin-bottom: 25px; text-shadow: 0 2px 4px black; font-weight: 700;">GLOBAL COMMAND</h2>
             
+            <!-- SUPER BAR -->
             <div class="super-bar">
+                <!-- Region -->
                 <div class="icon-wrapper">
                     <i class="fas fa-globe"></i>
                     <select id="region" class="bar-select">
@@ -193,14 +193,66 @@
                         <option value="USA">🇺🇸 USA</option>
                         <option value="India">🇮🇳 India</option>
                         <option value="UK">🇬🇧 UK</option>
+                        <option value="Argentina">🇦🇷 Argentina</option>
+                        <option value="Australia">🇦🇺 Australia</option>
+                        <option value="Austria">🇦🇹 Austria</option>
+                        <option value="Belgium (fr)">🇧🇪 Belgium (FR)</option>
+                        <option value="Belgium (nl)">🇧🇪 Belgium (NL)</option>
+                        <option value="Brazil">🇧🇷 Brazil</option>
+                        <option value="Bulgaria">🇧🇬 Bulgaria</option>
+                        <option value="Canada (en)">🇨🇦 Canada (EN)</option>
+                        <option value="Canada (fr)">🇨🇦 Canada (FR)</option>
+                        <option value="Chile">🇨🇱 Chile</option>
                         <option value="China">🇨🇳 China</option>
-                        <option value="Japan">🇯🇵 Japan</option>
-                        <option value="Russia">🇷🇺 Russia</option>
-                        <option value="Germany">🇩🇪 Germany</option>
+                        <option value="Colombia">🇨🇴 Colombia</option>
+                        <option value="Croatia">🇭🇷 Croatia</option>
+                        <option value="Czech Republic">🇨🇿 Czech Rep</option>
+                        <option value="Denmark">🇩🇰 Denmark</option>
+                        <option value="Estonia">🇪🇪 Estonia</option>
+                        <option value="Finland">🇫🇮 Finland</option>
                         <option value="France">🇫🇷 France</option>
+                        <option value="Germany">🇩🇪 Germany</option>
+                        <option value="Greece">🇬🇷 Greece</option>
+                        <option value="Hong Kong">🇭🇰 Hong Kong</option>
+                        <option value="Hungary">🇭🇺 Hungary</option>
+                        <option value="Indonesia">🇮🇩 Indonesia</option>
+                        <option value="Ireland">🇮🇪 Ireland</option>
+                        <option value="Israel">🇮🇱 Israel</option>
+                        <option value="Italy">🇮🇹 Italy</option>
+                        <option value="Japan">🇯🇵 Japan</option>
+                        <option value="Korea">🇰🇷 Korea</option>
+                        <option value="Latvia">🇱🇻 Latvia</option>
+                        <option value="Lithuania">🇱🇹 Lithuania</option>
+                        <option value="Malaysia">🇲🇾 Malaysia</option>
+                        <option value="Mexico">🇲🇽 Mexico</option>
+                        <option value="Netherlands">🇳🇱 Netherlands</option>
+                        <option value="New Zealand">🇳🇿 New Zealand</option>
+                        <option value="Norway">🇳🇴 Norway</option>
+                        <option value="Pakistan">🇵🇰 Pakistan</option>
+                        <option value="Peru">🇵🇪 Peru</option>
+                        <option value="Philippines">🇵🇭 Philippines</option>
+                        <option value="Poland">🇵🇱 Poland</option>
+                        <option value="Portugal">🇵🇹 Portugal</option>
+                        <option value="Romania">🇷🇴 Romania</option>
+                        <option value="Russia">🇷🇺 Russia</option>
+                        <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+                        <option value="Singapore">🇸🇬 Singapore</option>
+                        <option value="Slovakia">🇸🇰 Slovakia</option>
+                        <option value="Slovenia">🇸🇮 Slovenia</option>
+                        <option value="South Africa">🇿🇦 South Africa</option>
+                        <option value="Spain">🇪🇸 Spain</option>
+                        <option value="Sweden">🇸🇪 Sweden</option>
+                        <option value="Switzerland (de)">🇨🇭 Switzerland (DE)</option>
+                        <option value="Switzerland (fr)">🇨🇭 Switzerland (FR)</option>
+                        <option value="Taiwan">🇹🇼 Taiwan</option>
+                        <option value="Thailand">🇹🇭 Thailand</option>
+                        <option value="Turkey">🇹🇷 Turkey</option>
+                        <option value="Ukraine">🇺🇦 Ukraine</option>
+                        <option value="Vietnam">🇻🇳 Vietnam</option>
                     </select>
                 </div>
 
+                <!-- Mode -->
                 <div class="icon-wrapper">
                     <i class="fas fa-brain"></i>
                     <select id="mode" class="bar-select">
@@ -221,21 +273,25 @@
             <div class="loader" id="loader"></div>
         </div>
 
+        <!-- RESULTS AREA -->
         <div class="results-wrapper hidden" id="results-area">
+            <!-- REPORT -->
             <div class="card">
-                <div id="chart-container"></div>
                 <div id="report-content" class="report-content"></div>
             </div>
             
+            <!-- INFINITY IMAGES -->
             <div class="img-grid" id="img-grid"></div>
         </div>
     </div>
 
+    <!-- FULLSCREEN IMAGE MODAL -->
     <div class="fs-modal" id="fs-modal" onclick="this.style.display='none'">
         <span class="fs-close">&times;</span>
         <img id="fs-img" src="" alt="Fullscreen">
     </div>
 
+    <!-- HELP MODAL (Enhanced) -->
     <div class="help-modal" id="help-modal" onclick="if(event.target===this)this.style.display='none'">
         <div class="help-box">
             <h2 style="color:#007bff; margin-bottom:15px; border-bottom: 1px solid #333; padding-bottom: 10px;">SYSTEM MANUAL & USAGE GUIDE</h2>
@@ -243,8 +299,16 @@
             <div style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
                 <h4 style="color:white; margin-top:15px;"> What is NewsWeave?</h4>
                 <p style="font-size:0.95rem; color:#ccc; margin-bottom:15px;">
-                    NewsWeave is an autonomous <strong>Forensic Intelligence Agent</strong>. Unlike standard search engines that provide links, NewsWeave reads, verifies, and synthesizes data into a comprehensive dossier.
+                    NewsWeave is an autonomous <strong>Forensic Intelligence Agent</strong>. Unlike standard search engines that provide links, NewsWeave reads, verifies, and synthesizes data into a comprehensive dossier. It uses a multi-vector search engine to cross-reference facts, debunk rumors, and gather real-time market data.
                 </p>
+
+                <h4 style="color:white; margin-top:15px;"> How to Operate</h4>
+                <ol style="margin-left:20px; color:#ccc; font-size:0.95rem; margin-bottom:15px; line-height:1.6;">
+                    <li><strong>Select Region ():</strong> Click the Globe icon. Choose your target country (e.g., 'India' for INR currency & local laws, 'USA' for federal data).</li>
+                    <li><strong>Select Intelligence Mode ():</strong> Click the Brain icon. Choose how the AI should think (see modes below).</li>
+                    <li><strong>Input Parameter:</strong> Type your query in the Superbar. Be specific for best results.</li>
+                    <li><strong>Execute:</strong> Click the Blue Arrow to launch the investigation.</li>
+                </ol>
 
                 <h4 style="color:white; margin-top:15px;"> Intelligence Modes</h4>
                 <ul style="margin-left:20px; color:#ccc; font-size:0.95rem; margin-bottom:15px; line-height:1.6;">
@@ -254,6 +318,14 @@
                     <li><strong>Market Analysis:</strong> Hunts for financial tickers, revenue reports, and economic growth stats.</li>
                     <li><strong>Deep Research:</strong> The standard "All-Rounder" mode for deep context and history.</li>
                 </ul>
+
+                <h4 style="color:white; margin-top:15px;"> Sample Prompts</h4>
+                <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; color:#00c6ff; font-family:monospace; font-size:0.9rem;">
+                    • "List all emerging AI video tools released in 2025" (Catalog)<br>
+                    • "Is the 'WhatsApp Gold' virus warning real?" (Fact Check)<br>
+                    • "Reliance Industries Q4 2025 revenue analysis" (Market - India)<br>
+                    • "Impact of new H1B visa rules on tech sector" (Deep Research - USA)
+                </div>
             </div>
             <br>
             <button class="btn-start" style="padding:10px 30px; font-size:1rem; width:100%;" onclick="document.getElementById('help-modal').style.display='none'">Close Manual</button>
@@ -276,7 +348,6 @@
 
             document.getElementById('loader').style.display = 'block';
             document.getElementById('results-area').classList.add('hidden');
-            document.getElementById('chart-container').innerHTML = ''; // Clear previous charts
 
             try {
                 const res = await fetch('/analyze', {
@@ -290,12 +361,6 @@
                 // Render Text
                 document.getElementById('report-content').innerHTML = data.report;
 
-                // Render Chart if available
-                if (data.chart) {
-                    const chartData = JSON.parse(data.chart);
-                    Plotly.newPlot('chart-container', chartData.data, chartData.layout);
-                }
-
                 // Render Images (Massive Grid)
                 const grid = document.getElementById('img-grid');
                 grid.innerHTML = '';
@@ -308,8 +373,7 @@
                 document.getElementById('results-area').classList.remove('hidden');
 
             } catch(e) {
-                console.error(e);
-                alert("System Offline or Error. Check console.");
+                alert("System Offline.");
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
