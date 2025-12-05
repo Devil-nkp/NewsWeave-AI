@@ -2,13 +2,10 @@ fastapi
 uvicorn
 jinja2
 python-multipart
-langchain-groq
 duckduckgo-search
-textblob
-plotly
-pandas
+langchain-groq
 wikipedia
-requests
+textblob
+pandas
+plotly
 pydantic
-scikit-learn
-statsmodels
