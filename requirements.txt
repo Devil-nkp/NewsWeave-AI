@@ -4,9 +4,11 @@ jinja2
 python-multipart
 langchain-groq
 duckduckgo-search
-wikipedia
-pandas
+textblob
 plotly
-statsmodels
-pydantic
+pandas
+wikipedia
 requests
+pydantic
+scikit-learn
+statsmodels
