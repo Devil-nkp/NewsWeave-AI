@@ -2,7 +2,6 @@ import os
 import uvicorn
 import re
 import time
-import random
 import json
 import logging
 from datetime import datetime
@@ -14,19 +13,27 @@ from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from duckduckgo_search import DDGS 
 import wikipedia
-from textblob import TextBlob
 import pandas as pd
 import plotly.express as px
 import plotly.utils
 
 # --- SYSTEM CONFIGURATION ---
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("NewsWeave-Singularity")
+logger = logging.getLogger("NewsWeave-Infinity")
 
-INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+# CRITICAL: Ensure API Key is set. If not found, the system warns but tries to run.
+INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY")
+if not INTERNAL_API_KEY:
+    logger.warning("⚠️ GROQ_API_KEY not found in environment variables! LLM features will fail.")
 
 app = FastAPI()
+
+# Auto-create static directory if missing to prevent crash
+if not os.path.exists("static"):
+    os.makedirs("static")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Templates configuration
 templates = Jinja2Templates(directory="templates")
 
 # --- GLOBAL REGION MAP (50+ Nations) ---
@@ -57,13 +64,16 @@ class SearchRequest(BaseModel):
     mode: str
 
 # ==========================================
-# 🧠 SINGULARITY INTELLIGENCE AGENT (v13)
+#  SINGULARITY INTELLIGENCE AGENT (v13)
 # ==========================================
 
 class SingularityAgent:
     def __init__(self):
         # Temperature 0.0 for robotic factual precision
-        self.llm = ChatGroq(temperature=0.0, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY)
+        if INTERNAL_API_KEY:
+            self.llm = ChatGroq(temperature=0.0, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY)
+        else:
+            self.llm = None
         self.date_str = datetime.now().strftime("%B %d, %Y")
 
     def _determine_mode(self, topic):
@@ -138,7 +148,7 @@ class SingularityAgent:
                         logger.warning(f"Image batch failed: {img_err}")
                         continue
                     
-                    time.sleep(0.2) # Anti-rate-limit pause
+                    time.sleep(0.5) # Increased Anti-rate-limit pause
         except Exception as e:
             logger.error(f"Image Sweep Critical Error: {e}")
             
@@ -203,6 +213,8 @@ class SingularityAgent:
                         for r in text:
                             vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nINFO: {r['body']}\n\n"
                     except: pass
+                    
+                    time.sleep(0.2) # Safety pause
         except Exception as e:
             logger.error(f"Search Error: {e}")
 
@@ -214,23 +226,45 @@ class SingularityAgent:
         """
         try:
             years = re.findall(r'\b(20\d{2})\b', report_text)
+            # Improved regex to find numbers but avoid years
             numbers = re.findall(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\b', report_text)
             
             if len(years) > 2 and len(numbers) > 2:
                 clean_years, clean_nums = [], []
-                for i in range(min(len(years), len(numbers))):
+                # Simple heuristic mapping
+                limit = min(len(years), len(numbers))
+                
+                for i in range(limit):
                     try:
                         y = int(years[i])
-                        v = float(numbers[i].replace(',', ''))
+                        v_str = numbers[i].replace(',', '')
+                        v = float(v_str)
+                        
+                        # Filter: Value shouldn't look like a year (1900-2100) unless context implies otherwise
+                        # This prevents plotting "Year vs Year"
+                        if 1900 < v < 2100 and v == y:
+                            continue
+                            
                         clean_years.append(y)
                         clean_nums.append(v)
                     except: pass
                 
                 if clean_years:
                     df = pd.DataFrame({"Year": clean_years, "Value": clean_nums})
-                    # Trendline enabled (requires statsmodels)
+                    
+                    # Check if statsmodels is available for trendlines
+                    has_ols = False
+                    try:
+                        import statsmodels.api
+                        has_ols = True
+                    except ImportError:
+                        logger.warning("Statsmodels not found. Trendlines disabled.")
+                    
+                    # Trendline enabled only if statsmodels exists
+                    t_line = "ols" if (len(df) > 3 and has_ols) else None
+                    
                     fig = px.scatter(df, x="Year", y="Value", title="Data Trend Analysis", 
-                                     trendline="ols" if len(df) > 3 else None, template="plotly_dark")
+                                     trendline=t_line, template="plotly_dark")
                     return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         except Exception as e:
             logger.error(f"Chart Error: {e}")
@@ -245,9 +279,12 @@ class SingularityAgent:
             try:
                 context = f"WIKIPEDIA: {wikipedia.summary(topic, sentences=10)}"
             except:
-                return "⚠️ Mission Failed: No verifiable data found.", [], None
+                return " Mission Failed: No verifiable data found.", [], None
 
         # 3. PROMPT ENGINEERING (THE BRAIN)
+        if not self.llm:
+             return "SYSTEM ERROR: API Key Missing. Please set GROQ_API_KEY environment variable.", [], None
+
         structure_instruction = ""
         
         if resolved_mode == "Catalog":
@@ -302,7 +339,7 @@ class SingularityAgent:
 agent = SingularityAgent()
 
 # ==========================================
-# 🌐 API ROUTES
+#  API ROUTES
 # ==========================================
 
 @app.get("/")
