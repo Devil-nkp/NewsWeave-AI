@@ -5,9 +5,10 @@ python-multipart
 langchain-groq
 duckduckgo-search
 textblob
+plotly
 pandas
 wikipedia
 requests
+pydantic
 scikit-learn
 statsmodels
-pydantic
