@@ -4,7 +4,7 @@ import uvicorn
 import re
 import time
 import logging
-import asyncio
+import random
 from datetime import datetime, date
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
@@ -54,7 +54,7 @@ def save_stats(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f)
 
-# --- ULTIMATE GLOBAL REGION MAP (65+ COUNTRIES) ---
+# --- ULTIMATE GLOBAL REGION MAP (67 Countries) ---
 REGION_MAP = {
     "Global": "wt-wt", "Argentina": "ar-es", "Australia": "au-en", "Austria": "at-de",
     "Belgium (FR)": "be-fr", "Belgium (NL)": "be-nl", "Brazil": "br-pt", "Bulgaria": "bg-bg",
@@ -74,6 +74,16 @@ REGION_MAP = {
     "USA": "us-en", "Vietnam": "vn-vi"
 }
 
+# --- SMART IMAGE CATEGORIES ---
+CATEGORY_IMAGES = {
+    "tech": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80",
+    "finance": "https://images.unsplash.com/photo-1611974765270-ca1258634369?w=600&q=80",
+    "war": "https://images.unsplash.com/photo-1555544719-7e10df232677?w=600&q=80",
+    "politics": "https://images.unsplash.com/photo-1541872703-74c59636a226?w=600&q=80",
+    "health": "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80",
+    "general": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&q=80"
+}
+
 class SearchRequest(BaseModel):
     topic: str
     region: str
@@ -83,7 +93,7 @@ class TrendingRequest(BaseModel):
     region: str
 
 # ==========================================
-# 🧠 SWARM INTELLIGENCE CORE (v35)
+# 🧠 SWARM INTELLIGENCE CORE (v36)
 # ==========================================
 
 class SwarmCommander:
@@ -197,17 +207,28 @@ async def serve_interface(request: Request):
 async def get_trending(request: TrendingRequest):
     region_code = REGION_MAP.get(request.region, "wt-wt")
     headlines = []
+    
     try:
         with DDGS() as ddgs:
-            # Query Logic: Customizes the trending search based on region
+            # Smart Query: Adjusts based on region
             query = "top news stories" if request.region == "Global" else f"top news in {request.region}"
             results = list(ddgs.news(query, region=region_code, max_results=8))
             
             for r in results:
-                # Fallback for missing images in DDGS response
-                img = r.get('image', None)
-                if not img: img = "https://via.placeholder.com/300x150/000000/00f3ff?text=NewsWeave+Intel"
+                title_lower = r['title'].lower()
                 
+                # 1. Try to get native image
+                img = r.get('image', '')
+                
+                # 2. Smart Fallback: Assign image based on keyword if native is missing
+                if not img:
+                    if any(x in title_lower for x in ['ai', 'tech', 'cyber', 'data', 'code']): img = CATEGORY_IMAGES['tech']
+                    elif any(x in title_lower for x in ['market', 'stock', 'bank', 'economy', 'money']): img = CATEGORY_IMAGES['finance']
+                    elif any(x in title_lower for x in ['war', 'army', 'conflict', 'strike', 'attack']): img = CATEGORY_IMAGES['war']
+                    elif any(x in title_lower for x in ['senate', 'law', 'gov', 'president', 'minister']): img = CATEGORY_IMAGES['politics']
+                    elif any(x in title_lower for x in ['virus', 'health', 'doctor', 'cancer']): img = CATEGORY_IMAGES['health']
+                    else: img = CATEGORY_IMAGES['general']
+
                 headlines.append({
                     "title": r['title'],
                     "url": r['url'],
