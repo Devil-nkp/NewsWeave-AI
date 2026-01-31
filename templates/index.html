@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Supreme v30</title>
+    <title>NewsWeave Supreme v31</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
+        /* CORE */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #000; color: white; overflow-x: hidden; }
         #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
@@ -15,13 +16,11 @@
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 1s ease forwards; }
 
+        /* TYPOGRAPHY */
         .logo-lg { font-size: 5rem; font-weight: 900; letter-spacing: 5px; background: linear-gradient(90deg, #fff, #aaa); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 50px rgba(255,255,255,0.2); margin-bottom: 10px; }
         .tagline { font-size: 1.2rem; color: #ccc; letter-spacing: 1px; margin-bottom: 20px; text-shadow: 0 2px 4px black; }
         
-        .social-proof { background: rgba(0,0,0,0.6); padding: 10px 25px; border-radius: 30px; border: 1px solid #333; font-size: 0.9rem; color: #aaa; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px); }
-        .social-proof i { color: #ff6b6b; animation: pulse 1.5s infinite; }
-        .like-number { color: #00c6ff; font-weight: bold; font-size: 1.1rem; }
-
+        /* UI ELEMENTS */
         .btn-start { padding: 15px 50px; font-size: 1.2rem; background: #007bff; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 0 20px rgba(0,123,255,0.4); }
         .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0,123,255,0.8); }
 
@@ -29,16 +28,14 @@
         .super-bar { display: flex; align-items: center; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); border: 1px solid #007bff; border-radius: 50px; padding: 5px 15px; box-shadow: 0 0 40px rgba(0, 123, 255, 0.3); height: 70px; }
         
         .search-input { flex: 1; background: transparent; border: none; color: white; font-size: 1.1rem; padding: 0 15px; outline: none; }
-        .bar-select { background: transparent; color: #ccc; border: none; font-size: 0.9rem; cursor: pointer; outline: none; padding: 5px; font-weight: 600; max-width: 130px; }
-        .bar-select option { background: #000; color: white; }
+        
+        /* FIXED: Custom Dropdowns */
+        .bar-select { background: #000; color: #fff; border: 1px solid #333; font-size: 0.9rem; cursor: pointer; outline: none; padding: 5px; font-weight: 600; max-width: 130px; border-radius: 5px; }
         .icon-wrapper { display: flex; align-items: center; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 10px; margin-right: 5px; }
         .icon-wrapper i { color: #007bff; font-size: 1.1rem; margin-right: 5px; }
 
         .submit-btn { width: 45px; height: 45px; border-radius: 50%; border: none; background: #007bff; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; margin-left: 10px; font-size: 1.2rem; }
         .submit-btn:hover { transform: scale(1.1); background: white; color: #007bff; }
-
-        .help-link { margin-top: 15px; color: #aaa; cursor: pointer; font-size: 0.9rem; transition: 0.3s; text-shadow: 0 1px 2px black; }
-        .help-link:hover { color: #007bff; text-decoration: underline; }
 
         /* RESULTS AREA */
         .results-wrapper { width: 100%; max-width: 1400px; margin-top: 40px; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; animation: fadeInUp 1s ease; }
@@ -59,10 +56,11 @@
         .logs-container { margin-top: 20px; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00c6ff; height: 150px; overflow-y: auto; border-top: 1px dashed #333; padding-top: 10px; }
         .log-entry { margin-bottom: 5px; border-left: 3px solid #007bff; padding-left: 10px; animation: fadeIn 0.5s ease; }
 
-        .like-section { text-align: center; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px; }
-        .btn-like { background: #1a1a1a; border: 1px solid #ff6b6b; color: #ff6b6b; padding: 10px 30px; border-radius: 30px; cursor: pointer; font-size: 1rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; }
-        .btn-like:hover { background: #ff6b6b; color: white; box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); }
+        .social-proof { background: rgba(0,0,0,0.6); padding: 10px 25px; border-radius: 30px; border: 1px solid #333; font-size: 0.9rem; color: #aaa; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px); }
+        .social-proof i { color: #ff6b6b; animation: pulse 1.5s infinite; }
+        .like-number { color: #00c6ff; font-weight: bold; font-size: 1.1rem; }
 
+        /* MODALS */
         .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
         .fs-modal img { max-width: 95%; max-height: 95%; border-radius: 5px; }
         .fs-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 3rem; cursor: pointer; }
@@ -82,10 +80,9 @@
 <body>
     <video id="video-background" autoplay muted loop playsinline><source src="/static/background.mp4" type="video/mp4"></video>
 
-    <!-- LANDING -->
     <div class="container" id="p1">
         <h1 class="logo-lg">NEWSWEAVE</h1>
-        <p class="tagline">SUPREME INTELLIGENCE SWARM v30.0</p>
+        <p class="tagline">SUPREME INTELLIGENCE SWARM v31.0</p>
         <div class="social-proof">
             <i class="fas fa-heart"></i>
             <span class="like-number" id="landing-likes">{{ total_likes }}</span>
@@ -94,7 +91,6 @@
         <button class="btn-start" onclick="navTo('p2')">INITIALIZE SWARM</button>
     </div>
 
-    <!-- COMMAND CENTER -->
     <div class="container hidden" id="p2" style="justify-content: flex-start; padding-top: 10vh;">
         <div class="search-wrapper">
             <h2 style="margin-bottom: 25px; text-shadow: 0 2px 4px black; font-weight: 700;">GLOBAL COMMAND</h2>
@@ -102,25 +98,14 @@
                 <div class="icon-wrapper"><i class="fas fa-globe"></i>
                     <select id="region" class="bar-select">
                         <option value="Global">Global</option><option value="USA">USA</option><option value="India">India</option><option value="UK">UK</option>
-                        <option value="Argentina">Argentina</option><option value="Australia">Australia</option><option value="Austria">Austria</option>
-                        <option value="Belgium (fr)">Belgium (FR)</option><option value="Belgium (nl)">Belgium (NL)</option><option value="Brazil">Brazil</option>
-                        <option value="Bulgaria">Bulgaria</option><option value="Canada (en)">Canada (EN)</option><option value="Canada (fr)">Canada (FR)</option>
-                        <option value="Chile">Chile</option><option value="China">China</option><option value="Colombia">Colombia</option>
-                        <option value="Croatia">Croatia</option><option value="Czech Republic">Czech Rep</option><option value="Denmark">Denmark</option>
-                        <option value="Egypt">Egypt</option><option value="Estonia">Estonia</option><option value="Finland">Finland</option>
-                        <option value="France">France</option><option value="Germany">Germany</option><option value="Greece">Greece</option>
-                        <option value="Hong Kong">Hong Kong</option><option value="Hungary">Hungary</option><option value="Indonesia">Indonesia</option>
-                        <option value="Ireland">Ireland</option><option value="Israel">Israel</option><option value="Italy">Italy</option>
-                        <option value="Japan">Japan</option><option value="Korea">Korea</option><option value="Latvia">Latvia</option>
-                        <option value="Lithuania">Lithuania</option><option value="Malaysia">Malaysia</option><option value="Mexico">Mexico</option>
-                        <option value="Netherlands">Netherlands</option><option value="New Zealand">New Zealand</option><option value="Norway">Norway</option>
-                        <option value="Pakistan">Pakistan</option><option value="Peru">Peru</option><option value="Philippines">Philippines</option><option value="Poland">Poland</option><option value="Portugal">Portugal</option><option value="Romania">Romania</option><option value="Russia">Russia</option>
-                        <option value="Saudi Arabia">Saudi Arabia</option><option value="Singapore">Singapore</option><option value="Slovakia">Slovakia</option>
-                        <option value="Slovenia">Slovenia</option><option value="South Africa">South Africa</option><option value="Spain">Spain</option>
-                        <option value="Sweden">Sweden</option><option value="Switzerland (de)">Switzerland (DE)</option><option value="Switzerland (fr)">Switzerland (FR)</option><option value="Taiwan">Taiwan</option><option value="Thailand">Thailand</option><option value="Turkey">Turkey</option><option value="Ukraine">Ukraine</option><option value="Vietnam">Vietnam</option>
+                        <option value="China">China</option><option value="Japan">Japan</option><option value="Germany">Germany</option>
                     </select>
                 </div>
-                <div class="icon-wrapper"><i class="fas fa-brain"></i><select id="mode" class="bar-select"><option value="Auto">Auto</option><option value="Catalog">Catalog</option><option value="Fact Check">Verify</option><option value="Deep Research">Deep</option><option value="Market Analysis">Market</option></select></div>
+                <div class="icon-wrapper"><i class="fas fa-brain"></i>
+                    <select id="mode" class="bar-select">
+                        <option value="Auto">Auto</option><option value="Catalog">Catalog</option><option value="Fact Check">Verify</option><option value="Deep Research">Deep</option><option value="Market Analysis">Market</option>
+                    </select>
+                </div>
                 <input type="text" id="topic" class="search-input" placeholder="Ex: 'List all emerging AI tools'...">
                 <button class="submit-btn" onclick="runScan()"><i class="fas fa-arrow-up"></i></button>
             </div>
@@ -131,11 +116,9 @@
         <div class="results-wrapper hidden" id="results-area">
             <div class="card">
                 <div id="report-content" class="report-content"></div>
-                <!-- NEURAL LOGS -->
                 <div class="logs-container" id="logs-container"></div>
-                <div class="like-section">
-                    <p style="color:#888;">Was this intelligence useful?</p>
-                    <button class="btn-like" onclick="sendLike(this)"><i class="far fa-heart"></i> Like Result</button>
+                <div style="text-align:center; margin-top:20px;">
+                    <button style="background:transparent; border:1px solid #444; color:#888; padding:5px 15px; border-radius:20px; cursor:pointer;" onclick="alert('Thank you for feedback.')">Feedback</button>
                 </div>
             </div>
             
@@ -147,14 +130,13 @@
         </div>
     </div>
 
-    <!-- MODALS -->
     <div class="fs-modal" id="fs-modal" onclick="this.style.display='none'"><span class="fs-close">&times;</span><img id="fs-img" src=""></div>
     <div class="help-modal" id="help-modal" onclick="if(event.target===this)this.style.display='none'">
         <div class="help-box">
-            <h3 style="color:#007bff; margin-bottom:15px;">System Manual v30</h3>
+            <h3 style="color:#007bff; margin-bottom:15px;">System Manual v31</h3>
             <p><strong>1. Infinity Catalog:</strong> Ask for "All crimes" or "List technologies" to get an exhaustive list.</p>
             <p><strong>2. Visual Trawl:</strong> The system retrieves 20-50 real images, filtering out AI art.</p>
-            <p><strong>3. Aegis Protocol:</strong> Checks event existence before reporting.</p>
+            <p><strong>3. Disclaimer:</strong> All results include educational safety warnings.</p>
             <br><button class="btn-start" style="padding:10px 30px; font-size:1rem;" onclick="document.getElementById('help-modal').style.display='none'">Close</button>
         </div>
     </div>
@@ -172,7 +154,7 @@
             
             document.getElementById('loader').style.display = 'block';
             document.getElementById('results-area').classList.add('hidden');
-            document.getElementById('logs-container').innerHTML = ''; // Clear logs
+            document.getElementById('logs-container').innerHTML = ''; 
 
             try {
                 const res = await fetch('/analyze', {
@@ -208,16 +190,6 @@
                 document.getElementById('results-area').classList.remove('hidden');
             } catch(e) { alert("System Offline."); } 
             finally { document.getElementById('loader').style.display = 'none'; }
-        }
-
-        async function sendLike(btn) {
-            btn.innerHTML = '<i class="fas fa-heart"></i> Liked!';
-            btn.style.background = '#ff6b6b';
-            btn.style.color = 'white';
-            btn.disabled = true;
-            const res = await fetch('/like', { method: 'POST' });
-            const data = await res.json();
-            document.getElementById('landing-likes').innerText = data.new_count;
         }
 
         function openFS(src) { document.getElementById('fs-img').src = src; document.getElementById('fs-modal').style.display = 'flex'; }
