@@ -5,6 +5,8 @@ import re
 import time
 import logging
 import asyncio
+import random
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, date
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
@@ -37,20 +39,21 @@ os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# --- DATA PERSISTENCE (LIKES) ---
+# --- DATA PERSISTENCE (STATS) ---
 DATA_FILE = "data/stats.json"
 os.makedirs("data", exist_ok=True)
 
-# IN-MEMORY CACHE (Wipes on restart, keeps speed high during session)
+# IN-MEMORY CACHE (Crucial for Speed)
 TRENDING_CACHE = {} 
 
 def load_stats():
+    # Default state if no file exists
     default = {"prompts_today": 0, "total_prompts": 0, "total_likes": 0, "date": str(date.today())}
     if not os.path.exists(DATA_FILE): return default
     try:
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
-            # Reset daily counter if date changed, but KEEP total_likes
+            # Reset daily prompts but PRESERVE total_likes
             if data.get("date") != str(date.today()):
                 data["prompts_today"] = 0
                 data["date"] = str(date.today())
@@ -62,7 +65,7 @@ def save_stats(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f)
 
-# --- ULTIMATE GLOBAL REGION MAP (67 Countries) ---
+# --- ULTIMATE GLOBAL REGION MAP (67+ Countries) ---
 REGION_MAP = {
     "Global": "wt-wt", "Argentina": "ar-es", "Australia": "au-en", "Austria": "at-de",
     "Belgium (FR)": "be-fr", "Belgium (NL)": "be-nl", "Brazil": "br-pt", "Bulgaria": "bg-bg",
@@ -91,7 +94,7 @@ class TrendingRequest(BaseModel):
     region: str
 
 # ==========================================
-# 🧠 SWARM INTELLIGENCE CORE (v38)
+# 🧠 SWARM INTELLIGENCE CORE (v39)
 # ==========================================
 
 class SwarmCommander:
@@ -110,8 +113,8 @@ class SwarmCommander:
     def _hunter_agent(self, topic, region_code, mode):
         self.log("HUNTER", f"Initiating multi-vector sweep for: {topic}")
         strategies = []
-        if mode == "Fact Check": strategies = [f"{topic} verified fact check", f"is {topic} true or fake"]
-        elif mode == "Market Analysis": strategies = [f"{topic} revenue statistics {datetime.now().year}", f"{topic} financial report"]
+        if mode == "Fact Check": strategies = [f"{topic} verified fact check", f"is {topic} true"]
+        elif mode == "Market Analysis": strategies = [f"{topic} revenue data {datetime.now().year}", f"{topic} market report"]
         elif mode == "Catalog": strategies = [f"list of {topic}", f"types of {topic}"]
         else: strategies = [f"{topic} news analysis", f"{topic} details"]
         
@@ -119,8 +122,7 @@ class SwarmCommander:
         with DDGS() as ddgs:
             for q in strategies:
                 try:
-                    # Minimal sleep to avoid block, relies on semaphore elsewhere
-                    time.sleep(0.3) 
+                    time.sleep(0.2) 
                     results = list(ddgs.text(q, region=region_code, max_results=4))
                     for r in results: vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nDATA: {r['body']}\n\n"
                 except: pass
@@ -193,28 +195,31 @@ class SwarmCommander:
 agent = SwarmCommander()
 
 # ==========================================
-# ⚡ OPTIMIZED ASYNC IMAGE ENGINE
+# ⚡ OPTIMIZED IMAGE ENGINE (Anti-Lag)
 # ==========================================
 
-# Semaphore limits concurrent image searches to 3. 
-# This prevents DDG from blocking the IP, solving the "Lag".
+# Semaphore: Limits to 3 concurrent requests to prevent blocking
 semaphore = asyncio.Semaphore(3)
+executor = ThreadPoolExecutor(max_workers=4)
 
 async def safe_fetch_image(title):
+    """
+    Fetches ONE high-accuracy image for a trending topic.
+    Uses Semaphore to prevent 429 Errors (The Lag Killer).
+    """
     async with semaphore:
-        try:
-            # Running synchronous DDG in a thread to keep event loop free
-            loop = asyncio.get_event_loop()
-            def search():
+        loop = asyncio.get_event_loop()
+        def search():
+            try:
                 with DDGS() as ddgs:
-                    # Strict search for 1 high-quality image
+                    # 'max_results=1' makes it extremely fast
                     imgs = list(ddgs.images(f"{title} news photo", max_results=1))
                     return imgs[0]['image'] if imgs else None
-            
-            img_url = await loop.run_in_executor(None, search)
-            return img_url
-        except:
-            return None
+            except:
+                return None
+        
+        # Offload to thread to keep server responsive
+        return await loop.run_in_executor(executor, search)
 
 @app.get("/")
 async def serve_interface(request: Request):
@@ -230,26 +235,24 @@ async def like_endpoint():
 
 @app.post("/trending")
 async def get_trending(request: TrendingRequest):
-    # 1. Check Cache (Instant Load)
+    # 1. Instant Cache Return
     cache_key = request.region
     if cache_key in TRENDING_CACHE:
-        # Expire cache every 10 mins if needed, currently persistent for session
         return JSONResponse(content={"headlines": TRENDING_CACHE[cache_key]})
 
     region_code = REGION_MAP.get(request.region, "wt-wt")
     headlines = []
     
     try:
-        # 2. Fetch News Text (Fast)
+        # 2. Fetch Text (Fast)
         query = "top news" if request.region == "Global" else f"top news in {request.region}"
         
-        # Run synchronous DDG in executor to not block main thread
         loop = asyncio.get_event_loop()
         def fetch_text():
             with DDGS() as ddgs:
                 return list(ddgs.news(query, region=region_code, max_results=8))
         
-        results = await loop.run_in_executor(None, fetch_text)
+        results = await loop.run_in_executor(executor, fetch_text)
         
         # 3. Identify Missing Images
         tasks = []
@@ -264,19 +267,18 @@ async def get_trending(request: TrendingRequest):
             headlines.append(item)
             
             if not item['image']:
-                # Queue accurate image search
+                # Queue accurate search
                 tasks.append(safe_fetch_image(r['title']))
             else:
-                # Queue dummy task to keep index alignment
+                # Queue dummy to keep index alignment
                 tasks.append(asyncio.sleep(0, result=item['image']))
         
-        # 4. Fetch Missing Images in Parallel (Throttled by Semaphore)
+        # 4. Fetch Images (Concurrent but Throttled)
         fetched_images = await asyncio.gather(*tasks)
         
         # 5. Merge & Fallback
         for i, img_url in enumerate(fetched_images):
             if not headlines[i]['image']:
-                # If search succeeded, use it. If not, use generic fallback.
                 headlines[i]['image'] = img_url if img_url else "https://via.placeholder.com/300x150/000000/00f3ff?text=NewsWeave+Intel"
 
         # 6. Save to Cache
