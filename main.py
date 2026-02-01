@@ -4,7 +4,7 @@ import uvicorn
 import re
 import time
 import logging
-import random
+import asyncio
 from datetime import datetime, date
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
@@ -37,16 +37,22 @@ os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# --- DATA PERSISTENCE ---
+# --- DATA PERSISTENCE (LIKES) ---
 DATA_FILE = "data/stats.json"
 os.makedirs("data", exist_ok=True)
 
 def load_stats():
-    default = {"prompts_today": 0, "total_prompts": 0, "total_likes": 2450, "date": str(date.today())}
+    # Start at 0 prompts, 0 likes if file doesn't exist
+    default = {"prompts_today": 0, "total_prompts": 0, "total_likes": 0, "date": str(date.today())}
     if not os.path.exists(DATA_FILE): return default
     try:
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
+            # Reset daily counter if date changed, but KEEP total_likes
+            if data.get("date") != str(date.today()):
+                data["prompts_today"] = 0
+                data["date"] = str(date.today())
+                save_stats(data) # Update date immediately
             return data
     except: return default
 
@@ -74,16 +80,6 @@ REGION_MAP = {
     "USA": "us-en", "Vietnam": "vn-vi"
 }
 
-# --- SMART IMAGE CATEGORIES ---
-CATEGORY_IMAGES = {
-    "tech": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80",
-    "finance": "https://images.unsplash.com/photo-1611974765270-ca1258634369?w=600&q=80",
-    "war": "https://images.unsplash.com/photo-1555544719-7e10df232677?w=600&q=80",
-    "politics": "https://images.unsplash.com/photo-1541872703-74c59636a226?w=600&q=80",
-    "health": "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80",
-    "general": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&q=80"
-}
-
 class SearchRequest(BaseModel):
     topic: str
     region: str
@@ -93,7 +89,7 @@ class TrendingRequest(BaseModel):
     region: str
 
 # ==========================================
-# 🧠 SWARM INTELLIGENCE CORE (v36)
+# 🧠 SWARM INTELLIGENCE CORE (v37)
 # ==========================================
 
 class SwarmCommander:
@@ -201,7 +197,25 @@ agent = SwarmCommander()
 
 @app.get("/")
 async def serve_interface(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "regions": REGION_MAP})
+    stats = load_stats()
+    return templates.TemplateResponse("index.html", {"request": request, "regions": REGION_MAP, "total_likes": stats["total_likes"]})
+
+@app.post("/like")
+async def like_endpoint():
+    s = load_stats()
+    s["total_likes"] += 1
+    save_stats(s)
+    return JSONResponse(content={"new_count": s["total_likes"]})
+
+# ASYNC HELPER FOR IMAGE FETCHING
+async def fetch_image_fallback(title):
+    try:
+        with DDGS() as ddgs:
+            # Quick search for 1 image matching the title
+            imgs = list(ddgs.images(title, max_results=1))
+            if imgs: return imgs[0]['image']
+    except: pass
+    return "https://via.placeholder.com/300x150/000000/00f3ff?text=NewsWeave+Intel"
 
 @app.post("/trending")
 async def get_trending(request: TrendingRequest):
@@ -210,32 +224,38 @@ async def get_trending(request: TrendingRequest):
     
     try:
         with DDGS() as ddgs:
-            # Smart Query: Adjusts based on region
             query = "top news stories" if request.region == "Global" else f"top news in {request.region}"
             results = list(ddgs.news(query, region=region_code, max_results=8))
             
+            # Prepare tasks for headlines missing images
+            tasks = []
+            
             for r in results:
-                title_lower = r['title'].lower()
-                
-                # 1. Try to get native image
-                img = r.get('image', '')
-                
-                # 2. Smart Fallback: Assign image based on keyword if native is missing
-                if not img:
-                    if any(x in title_lower for x in ['ai', 'tech', 'cyber', 'data', 'code']): img = CATEGORY_IMAGES['tech']
-                    elif any(x in title_lower for x in ['market', 'stock', 'bank', 'economy', 'money']): img = CATEGORY_IMAGES['finance']
-                    elif any(x in title_lower for x in ['war', 'army', 'conflict', 'strike', 'attack']): img = CATEGORY_IMAGES['war']
-                    elif any(x in title_lower for x in ['senate', 'law', 'gov', 'president', 'minister']): img = CATEGORY_IMAGES['politics']
-                    elif any(x in title_lower for x in ['virus', 'health', 'doctor', 'cancer']): img = CATEGORY_IMAGES['health']
-                    else: img = CATEGORY_IMAGES['general']
-
-                headlines.append({
+                item = {
                     "title": r['title'],
                     "url": r['url'],
                     "source": r['source'],
                     "date": r['date'],
-                    "image": img
-                })
+                    "image": r.get('image', None)
+                }
+                
+                # If no image, we need to fetch one
+                if not item['image']:
+                    tasks.append(fetch_image_fallback(r['title']))
+                else:
+                    # Placeholder to keep index alignment
+                    tasks.append(asyncio.sleep(0, result=item['image']))
+                
+                headlines.append(item)
+            
+            # Run image fetchers in parallel
+            images = await asyncio.gather(*tasks)
+            
+            # Assign fetched images back to headlines
+            for i, img_url in enumerate(images):
+                if not headlines[i]['image']: # Only overwrite if it was missing
+                    headlines[i]['image'] = img_url
+
     except Exception as e:
         logger.error(f"Trending Error: {e}")
     
