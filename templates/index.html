@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Supreme | v37</title>
+    <title>NewsWeave Supreme | v38</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
-        /* --- VARIABLES --- */
+        /* --- CYBERPUNK THEME RESTORED (v36 Style) --- */
         :root {
             --neon-blue: #00f3ff;
             --neon-purple: #bc13fe;
             --glass-bg: rgba(10, 10, 15, 0.85);
+            --glass-border: 1px solid rgba(0, 243, 255, 0.2);
             --font-head: 'Orbitron', sans-serif;
             --font-body: 'Rajdhani', sans-serif;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #020205; color: white; font-family: var(--font-body); overflow-x: hidden; }
         
-        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.6; }
-        .grid-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, transparent 0%, #000 100%); z-index: -1; pointer-events: none; }
+        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; filter: contrast(1.2) brightness(0.8); }
+        .grid-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, transparent 0%, #000 100%), repeating-linear-gradient(0deg, transparent 0, transparent 1px, rgba(0, 243, 255, 0.03) 2px); z-index: -1; pointer-events: none; }
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 0.8s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -28,13 +29,15 @@
         /* --- HERO --- */
         .landing-container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .logo-lg { font-family: var(--font-head); font-size: 6rem; font-weight: 900; letter-spacing: 5px; background: linear-gradient(180deg, #fff, #888); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 60px rgba(0, 243, 255, 0.3); margin-bottom: 20px; }
-        .btn-start { padding: 18px 60px; font-size: 1.3rem; font-family: var(--font-head); background: transparent; color: var(--neon-blue); border: 2px solid var(--neon-blue); cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.4s; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2); }
-        .btn-start:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 50px var(--neon-blue); }
-
-        /* --- SOCIAL PROOF --- */
-        .social-proof { margin-top: 30px; background: rgba(0,0,0,0.6); padding: 10px 25px; border-radius: 30px; border: 1px solid #333; font-size: 0.9rem; color: #aaa; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px); }
+        
+        .social-proof { background: rgba(0, 243, 255, 0.05); padding: 10px 30px; border-radius: 30px; border: var(--glass-border); font-size: 1rem; color: #aaa; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(10px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.1); }
         .social-proof i { color: #ff6b6b; animation: pulse 1.5s infinite; }
-        .like-number { color: #00c6ff; font-weight: bold; font-size: 1.1rem; }
+        .like-number { color: var(--neon-blue); font-weight: bold; font-size: 1.2rem; font-family: var(--font-head); }
+
+        .btn-start { margin-top: 40px; padding: 18px 60px; font-size: 1.3rem; font-family: var(--font-head); background: transparent; color: var(--neon-blue); border: 2px solid var(--neon-blue); cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.4s; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2); position: relative; overflow: hidden; }
+        .btn-start::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: var(--neon-blue); transition: 0.4s; z-index: -1; }
+        .btn-start:hover { color: black; box-shadow: 0 0 50px var(--neon-blue); }
+        .btn-start:hover::before { left: 0; }
 
         /* --- COMMAND CENTER --- */
         .command-container { min-height: 100vh; width: 100%; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
@@ -43,7 +46,8 @@
         .super-bar { display: flex; align-items: center; background: rgba(0, 0, 0, 0.9); border: 1px solid var(--neon-blue); border-radius: 50px; padding: 5px 20px; height: 75px; box-shadow: 0 0 30px rgba(0, 243, 255, 0.15); }
         .bar-select { background: black; color: white; border: 1px solid #333; padding: 5px 10px; font-family: var(--font-body); font-weight: bold; border-radius: 5px; cursor: pointer; outline: none; margin-right: 10px; }
         .search-input { flex: 1; background: transparent; border: none; color: white; font-size: 1.2rem; padding: 0 20px; font-family: var(--font-body); outline: none; }
-        .submit-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--neon-blue); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: black; }
+        .submit-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--neon-blue); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: black; transition: 0.3s; }
+        .submit-btn:hover { transform: scale(1.1); background: white; }
 
         /* --- INTEL TRIGGER BUTTON --- */
         .intel-trigger {
@@ -52,7 +56,7 @@
             border: 1px solid var(--neon-blue);
             color: var(--neon-blue);
             padding: 12px 30px;
-            border-radius: 30px;
+            border-radius: 4px; /* Squared off for cyberpunk look */
             font-family: var(--font-head);
             font-size: 0.9rem;
             cursor: pointer;
@@ -63,6 +67,7 @@
             backdrop-filter: blur(5px);
             width: fit-content;
             margin-left: auto; margin-right: auto;
+            letter-spacing: 1px;
         }
         .intel-trigger:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 30px var(--neon-blue); }
         .pulse { animation: pulse 2s infinite; }
@@ -72,10 +77,10 @@
         .trending-overlay {
             width: 100%;
             margin-top: 20px;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(5, 5, 10, 0.95);
             border: 1px solid var(--neon-blue);
-            border-radius: 15px;
-            padding: 20px;
+            border-radius: 10px;
+            padding: 25px;
             backdrop-filter: blur(20px);
             position: relative;
             animation: slideDown 0.5s ease;
@@ -84,47 +89,49 @@
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
         .close-trend { position: absolute; top: 10px; right: 15px; color: #888; cursor: pointer; font-size: 1.5rem; transition: 0.3s; }
-        .close-trend:hover { color: red; transform: rotate(90deg); }
+        .close-trend:hover { color: var(--neon-blue); }
 
-        .trending-header { font-family: var(--font-head); color: var(--neon-blue); margin-bottom: 15px; font-size: 1.1rem; text-transform: uppercase; }
+        .trending-header { font-family: var(--font-head); color: var(--neon-blue); margin-bottom: 20px; font-size: 1.2rem; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
         
-        .trending-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .trending-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .trend-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 5px;
             overflow: hidden;
             cursor: pointer;
             transition: 0.3s;
             border: 1px solid #333;
             position: relative;
         }
-        .trend-card:hover { border-color: var(--neon-blue); transform: translateY(-5px); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
-        .trend-img { width: 100%; height: 120px; object-fit: cover; opacity: 0.9; }
-        .trend-info { padding: 10px; }
-        .trend-title { font-size: 0.9rem; font-weight: bold; line-height: 1.3; color: white; margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .trend-meta { font-size: 0.7rem; color: #888; }
-        .trend-action { position: absolute; top: 5px; right: 5px; background: var(--neon-blue); color: black; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; opacity: 0; transition: 0.3s; }
+        .trend-card:hover { border-color: var(--neon-blue); transform: translateY(-5px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.15); }
+        .trend-img { width: 100%; height: 140px; object-fit: cover; opacity: 0.8; transition: 0.3s; }
+        .trend-card:hover .trend-img { opacity: 1; }
+        .trend-info { padding: 15px; }
+        .trend-title { font-size: 0.95rem; font-weight: bold; line-height: 1.4; color: white; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .trend-meta { font-size: 0.75rem; color: var(--neon-blue); font-family: var(--font-head); letter-spacing: 1px; }
+        .trend-action { position: absolute; top: 10px; right: 10px; background: var(--neon-blue); color: black; font-size: 0.7rem; padding: 4px 8px; font-weight: bold; opacity: 0; transition: 0.3s; font-family: var(--font-head); }
         .trend-card:hover .trend-action { opacity: 1; }
 
         /* --- RESULTS GRID --- */
         .results-grid { width: 100%; max-width: 1600px; margin-top: 40px; display: grid; grid-template-columns: 350px 1fr 350px; gap: 20px; align-items: start; }
-        .panel { background: var(--glass-bg); border: 1px solid #333; border-radius: 15px; padding: 25px; backdrop-filter: blur(30px); max-height: 80vh; overflow-y: auto; }
-        .panel h3 { color: var(--neon-blue); font-family: var(--font-head); margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.1rem; }
+        .panel { background: var(--glass-bg); border: var(--glass-border); border-radius: 10px; padding: 25px; backdrop-filter: blur(30px); max-height: 80vh; overflow-y: auto; }
+        .panel h3 { color: var(--neon-blue); font-family: var(--font-head); margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.1rem; letter-spacing: 1px; }
         
         .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .img-item { width: 100%; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
+        .img-item { width: 100%; aspect-ratio: 16/9; border-radius: 4px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
         .img-item:hover { transform: scale(1.05); border-color: var(--neon-blue); }
         .img-item img { width: 100%; height: 100%; object-fit: cover; }
         
         .report-content { font-size: 1.1rem; line-height: 1.8; color: #ddd; }
-        .report-content h3 { color: white; margin-top: 25px; border-bottom: none; }
+        .report-content h3 { color: white; margin-top: 25px; border-bottom: none; font-family: var(--font-head); color: var(--neon-blue); }
+        .report-content a { color: var(--neon-blue); text-decoration: none; border-bottom: 1px dotted var(--neon-blue); }
         
-        .logs-box { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #00f3ff; line-height: 1.4; opacity: 0.8; }
+        .logs-box { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #00f3ff; line-height: 1.4; opacity: 0.9; }
         .log-entry { margin-bottom: 6px; border-left: 2px solid var(--neon-purple); padding-left: 8px; }
 
         /* LIKE BUTTON */
         .like-section { text-align: center; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px; }
-        .btn-like { background: #1a1a1a; border: 1px solid #ff6b6b; color: #ff6b6b; padding: 10px 30px; border-radius: 30px; cursor: pointer; font-size: 1rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; }
+        .btn-like { background: rgba(0,0,0,0.5); border: 1px solid #ff6b6b; color: #ff6b6b; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-head); letter-spacing: 1px; }
         .btn-like:hover { background: #ff6b6b; color: white; box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); }
 
         /* MODAL */
@@ -143,7 +150,7 @@
         <div class="social-proof">
             <i class="fas fa-heart"></i>
             <span class="like-number" id="landing-likes">{{ total_likes }}</span>
-            <span>People trusted our intelligence</span>
+            <span>AGENTS ACTIVE</span>
         </div>
         <br>
         <button class="btn-start" onclick="navTo('p2')">INITIALIZE SYSTEM</button>
@@ -151,7 +158,7 @@
 
     <div class="command-container hidden" id="p2">
         <div class="search-wrapper">
-            <h2 style="font-family:var(--font-head); text-align:center; margin-bottom:15px; color:var(--neon-blue);">GLOBAL COMMAND</h2>
+            <h2 style="font-family:var(--font-head); text-align:center; margin-bottom:15px; color:var(--neon-blue); letter-spacing:3px;">GLOBAL COMMAND</h2>
             <div class="super-bar">
                 <div style="border-right:1px solid #333; padding-right:10px; margin-right:10px;">
                     <i class="fas fa-globe" style="color:var(--neon-blue);"></i>
@@ -184,7 +191,7 @@
 
             <div id="loader" style="display:none; text-align:center; margin-top:20px;">
                 <i class="fas fa-circle-notch fa-spin" style="font-size:2rem; color:var(--neon-blue);"></i>
-                <p style="margin-top:10px; color:#aaa; letter-spacing:2px;">DEPLOYING AGENTS...</p>
+                <p style="margin-top:10px; color:#aaa; letter-spacing:2px; font-family:var(--font-head);">DEPLOYING AGENTS...</p>
             </div>
         </div>
 
@@ -200,7 +207,7 @@
                 
                 <div class="like-section">
                     <button class="btn-like" onclick="sendLike(this)">
-                        <i class="far fa-heart"></i> Verify & Like Result
+                        <i class="far fa-heart"></i> VERIFY & LIKE
                     </button>
                 </div>
             </div>
@@ -221,7 +228,7 @@
         }
 
         async function sendLike(btn) {
-            btn.innerHTML = '<i class="fas fa-heart"></i> Verified!';
+            btn.innerHTML = '<i class="fas fa-heart"></i> VERIFIED!';
             btn.style.background = '#ff6b6b';
             btn.style.color = 'white';
             btn.disabled = true;
@@ -284,14 +291,12 @@
             }
         }
 
-        // --- AUTO ANALYZE TRENDING ITEM ---
         function analyzeTrending(title) {
             document.getElementById('topic').value = title;
-            toggleTrending(); // Close the panel
-            runScan(); // Run the AI
+            toggleTrending(); 
+            runScan(); 
         }
 
-        // --- MAIN SCAN LOGIC ---
         async function runScan() {
             const topic = document.getElementById('topic').value;
             if(!topic) return alert("INPUT REQUIRED");
@@ -306,15 +311,12 @@
                 });
                 const data = await res.json();
                 
-                // Logs
                 const logsDiv = document.getElementById('logs-container');
                 logsDiv.innerHTML = '';
                 if(data.logs) data.logs.forEach(l => logsDiv.innerHTML += `<div class="log-entry">${l}</div>`);
 
-                // Report
                 document.getElementById('report-content').innerHTML = data.report;
 
-                // Images
                 const imgGrid = document.getElementById('img-grid');
                 imgGrid.innerHTML = '';
                 if(data.images.length) {
@@ -323,7 +325,6 @@
                     });
                 } else { imgGrid.innerHTML = '<p style="color:#555;">No visual assets.</p>'; }
 
-                // Chart
                 if(data.chart) {
                     Plotly.newPlot('chart-div', JSON.parse(data.chart), {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#aaa'}});
                 } else { document.getElementById('chart-div').innerHTML = ''; }
