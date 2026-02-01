@@ -24,9 +24,9 @@ logger = logging.getLogger("NewsWeave-Supreme")
 
 # SAFETY DISCLAIMER
 DISCLAIMER_HTML = """
-<div style="background: rgba(255, 165, 0, 0.1); border-left: 3px solid #ffaa00; padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 0.85rem; color: #ffcc80; display: flex; align-items: center; gap: 10px;">
+<div style="background: rgba(0, 243, 255, 0.05); border-left: 3px solid #00f3ff; padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 0.85rem; color: #aeeeff; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);">
     <i class="fas fa-shield-alt"></i>
-    <div><strong>AI GENERATED CONTENT:</strong> Verify critical data. This report is for educational research purposes.</div>
+    <div><strong>AI FORENSIC REPORT:</strong> Data generated autonomously. Verify critical intelligence.</div>
 </div>
 """
 
@@ -41,8 +41,10 @@ templates = Jinja2Templates(directory="templates")
 DATA_FILE = "data/stats.json"
 os.makedirs("data", exist_ok=True)
 
+# IN-MEMORY CACHE (Wipes on restart, keeps speed high during session)
+TRENDING_CACHE = {} 
+
 def load_stats():
-    # Start at 0 prompts, 0 likes if file doesn't exist
     default = {"prompts_today": 0, "total_prompts": 0, "total_likes": 0, "date": str(date.today())}
     if not os.path.exists(DATA_FILE): return default
     try:
@@ -52,7 +54,7 @@ def load_stats():
             if data.get("date") != str(date.today()):
                 data["prompts_today"] = 0
                 data["date"] = str(date.today())
-                save_stats(data) # Update date immediately
+                save_stats(data)
             return data
     except: return default
 
@@ -89,7 +91,7 @@ class TrendingRequest(BaseModel):
     region: str
 
 # ==========================================
-# 🧠 SWARM INTELLIGENCE CORE (v37)
+# 🧠 SWARM INTELLIGENCE CORE (v38)
 # ==========================================
 
 class SwarmCommander:
@@ -108,21 +110,22 @@ class SwarmCommander:
     def _hunter_agent(self, topic, region_code, mode):
         self.log("HUNTER", f"Initiating multi-vector sweep for: {topic}")
         strategies = []
-        if mode == "Fact Check": strategies = [f"{topic} fact check", f"is {topic} true"]
-        elif mode == "Market Analysis": strategies = [f"{topic} revenue data {datetime.now().year}", f"{topic} market report"]
+        if mode == "Fact Check": strategies = [f"{topic} verified fact check", f"is {topic} true or fake"]
+        elif mode == "Market Analysis": strategies = [f"{topic} revenue statistics {datetime.now().year}", f"{topic} financial report"]
         elif mode == "Catalog": strategies = [f"list of {topic}", f"types of {topic}"]
-        else: strategies = [f"{topic} news", f"{topic} analysis"]
+        else: strategies = [f"{topic} news analysis", f"{topic} details"]
         
         vault = ""
         with DDGS() as ddgs:
             for q in strategies:
                 try:
-                    time.sleep(0.5) 
+                    # Minimal sleep to avoid block, relies on semaphore elsewhere
+                    time.sleep(0.3) 
                     results = list(ddgs.text(q, region=region_code, max_results=4))
                     for r in results: vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nDATA: {r['body']}\n\n"
                 except: pass
 
-        if len(vault) < 500:
+        if len(vault) < 200:
             try:
                 page = wikipedia.summary(topic, sentences=5)
                 vault += f"ENCYCLOPEDIA: {page}\n\n"
@@ -133,7 +136,7 @@ class SwarmCommander:
         gallery = []
         try:
             with DDGS() as ddgs:
-                results = list(ddgs.images(f"{topic} real photo", region=region_code, max_results=20))
+                results = list(ddgs.images(f"{topic} real context", region=region_code, max_results=20))
                 for r in results:
                     if len(gallery) >= 20: break
                     gallery.append({"src": r['image'], "title": r['title']})
@@ -165,21 +168,19 @@ class SwarmCommander:
         self.logs = []
         region_code = REGION_MAP.get(region, "wt-wt")
         
-        # Hunter
         context = self._hunter_agent(topic, region_code, mode)
         images = self._vision_agent(topic, region_code)
         
         if not context and not images:
-             return f"{DISCLAIMER_HTML}<h3>⚠️ Mission Failed</h3><p>Data Void.</p>", [], None, self.logs
+             return f"{DISCLAIMER_HTML}<h3>⚠️ Mission Failed</h3><p>Data Void. Try a broader topic.</p>", [], None, self.logs
 
-        # Editor
         prompt = f"""
         You are NewsWeave Supreme. TOPIC: {topic} | REGION: {region}
         CONTEXT: {context}
         INSTRUCTIONS:
         1. Write a structured report with HTML tags (h3, p, ul).
         2. Use citations [1], [2].
-        3. If analyzing markets, extract numbers.
+        3. Extract numbers for analysis.
         """
         try: report = self.llm.invoke(prompt).content if self.llm else "LLM Offline."
         except Exception as e: report = str(e)
@@ -192,8 +193,28 @@ class SwarmCommander:
 agent = SwarmCommander()
 
 # ==========================================
-# 🌐 API ROUTES
+# ⚡ OPTIMIZED ASYNC IMAGE ENGINE
 # ==========================================
+
+# Semaphore limits concurrent image searches to 3. 
+# This prevents DDG from blocking the IP, solving the "Lag".
+semaphore = asyncio.Semaphore(3)
+
+async def safe_fetch_image(title):
+    async with semaphore:
+        try:
+            # Running synchronous DDG in a thread to keep event loop free
+            loop = asyncio.get_event_loop()
+            def search():
+                with DDGS() as ddgs:
+                    # Strict search for 1 high-quality image
+                    imgs = list(ddgs.images(f"{title} news photo", max_results=1))
+                    return imgs[0]['image'] if imgs else None
+            
+            img_url = await loop.run_in_executor(None, search)
+            return img_url
+        except:
+            return None
 
 @app.get("/")
 async def serve_interface(request: Request):
@@ -207,54 +228,59 @@ async def like_endpoint():
     save_stats(s)
     return JSONResponse(content={"new_count": s["total_likes"]})
 
-# ASYNC HELPER FOR IMAGE FETCHING
-async def fetch_image_fallback(title):
-    try:
-        with DDGS() as ddgs:
-            # Quick search for 1 image matching the title
-            imgs = list(ddgs.images(title, max_results=1))
-            if imgs: return imgs[0]['image']
-    except: pass
-    return "https://via.placeholder.com/300x150/000000/00f3ff?text=NewsWeave+Intel"
-
 @app.post("/trending")
 async def get_trending(request: TrendingRequest):
+    # 1. Check Cache (Instant Load)
+    cache_key = request.region
+    if cache_key in TRENDING_CACHE:
+        # Expire cache every 10 mins if needed, currently persistent for session
+        return JSONResponse(content={"headlines": TRENDING_CACHE[cache_key]})
+
     region_code = REGION_MAP.get(request.region, "wt-wt")
     headlines = []
     
     try:
-        with DDGS() as ddgs:
-            query = "top news stories" if request.region == "Global" else f"top news in {request.region}"
-            results = list(ddgs.news(query, region=region_code, max_results=8))
+        # 2. Fetch News Text (Fast)
+        query = "top news" if request.region == "Global" else f"top news in {request.region}"
+        
+        # Run synchronous DDG in executor to not block main thread
+        loop = asyncio.get_event_loop()
+        def fetch_text():
+            with DDGS() as ddgs:
+                return list(ddgs.news(query, region=region_code, max_results=8))
+        
+        results = await loop.run_in_executor(None, fetch_text)
+        
+        # 3. Identify Missing Images
+        tasks = []
+        for r in results:
+            item = {
+                "title": r['title'],
+                "url": r['url'],
+                "source": r['source'],
+                "date": r['date'],
+                "image": r.get('image', None)
+            }
+            headlines.append(item)
             
-            # Prepare tasks for headlines missing images
-            tasks = []
-            
-            for r in results:
-                item = {
-                    "title": r['title'],
-                    "url": r['url'],
-                    "source": r['source'],
-                    "date": r['date'],
-                    "image": r.get('image', None)
-                }
-                
-                # If no image, we need to fetch one
-                if not item['image']:
-                    tasks.append(fetch_image_fallback(r['title']))
-                else:
-                    # Placeholder to keep index alignment
-                    tasks.append(asyncio.sleep(0, result=item['image']))
-                
-                headlines.append(item)
-            
-            # Run image fetchers in parallel
-            images = await asyncio.gather(*tasks)
-            
-            # Assign fetched images back to headlines
-            for i, img_url in enumerate(images):
-                if not headlines[i]['image']: # Only overwrite if it was missing
-                    headlines[i]['image'] = img_url
+            if not item['image']:
+                # Queue accurate image search
+                tasks.append(safe_fetch_image(r['title']))
+            else:
+                # Queue dummy task to keep index alignment
+                tasks.append(asyncio.sleep(0, result=item['image']))
+        
+        # 4. Fetch Missing Images in Parallel (Throttled by Semaphore)
+        fetched_images = await asyncio.gather(*tasks)
+        
+        # 5. Merge & Fallback
+        for i, img_url in enumerate(fetched_images):
+            if not headlines[i]['image']:
+                # If search succeeded, use it. If not, use generic fallback.
+                headlines[i]['image'] = img_url if img_url else "https://via.placeholder.com/300x150/000000/00f3ff?text=NewsWeave+Intel"
+
+        # 6. Save to Cache
+        TRENDING_CACHE[cache_key] = headlines
 
     except Exception as e:
         logger.error(f"Trending Error: {e}")
