@@ -6,7 +6,6 @@ import time
 import logging
 import asyncio
 import random
-import httpx 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, date
 from fastapi import FastAPI, Request
@@ -21,21 +20,15 @@ import pandas as pd
 import plotly.express as px
 import plotly.utils
 
-# --- CONFIGURATION & LOGGING ---
+# --- CONFIGURATION ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NewsWeave-Supreme")
 
-# --- SMART KEEP-ALIVE STATE ---
-# This tracks the last time a HUMAN did something.
-LAST_ACTIVITY_TIMESTAMP = time.time()
-# Render provides this env var automatically; fallback to a placeholder
-APP_URL = os.environ.get("RENDER_EXTERNAL_URL") or "http://localhost:8000"
-
-# --- UI CONSTANTS ---
+# SAFETY DISCLAIMER
 DISCLAIMER_HTML = """
 <div style="background: rgba(0, 243, 255, 0.05); border-left: 3px solid #00f3ff; padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 0.85rem; color: #aeeeff; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);">
     <i class="fas fa-shield-alt"></i>
-    <div><strong>AI FORENSIC REPORT:</strong> Data generated autonomously via Swarm Intelligence. Verify critical intelligence.</div>
+    <div><strong>AI FORENSIC REPORT:</strong> Data generated autonomously. Verify critical intelligence.</div>
 </div>
 """
 
@@ -43,20 +36,24 @@ INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY")
 
 app = FastAPI()
 os.makedirs("static", exist_ok=True)
-os.makedirs("data", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# --- DATA PERSISTENCE ---
+# --- DATA PERSISTENCE (STATS) ---
 DATA_FILE = "data/stats.json"
+os.makedirs("data", exist_ok=True)
+
+# IN-MEMORY CACHE (Crucial for Speed)
 TRENDING_CACHE = {} 
 
 def load_stats():
+    # Default state if no file exists
     default = {"prompts_today": 0, "total_prompts": 0, "total_likes": 0, "date": str(date.today())}
     if not os.path.exists(DATA_FILE): return default
     try:
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
+            # Reset daily prompts but PRESERVE total_likes
             if data.get("date") != str(date.today()):
                 data["prompts_today"] = 0
                 data["date"] = str(date.today())
@@ -68,43 +65,7 @@ def save_stats(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f)
 
-# ==========================================
-# 🛡️ SMART SELF-PING LOGIC (ANTI-SLEEP)
-# ==========================================
-
-def update_user_activity():
-    """Call this in every route to prove a human is using the app."""
-    global LAST_ACTIVITY_TIMESTAMP
-    LAST_ACTIVITY_TIMESTAMP = time.time()
-
-async def self_ping_loop():
-    """The 'Ghost' user that keeps the app awake only when real users are gone."""
-    # If no activity for 10 minutes, start pinging every 2 minutes.
-    IDLE_LIMIT = 600 
-    
-    while True:
-        await asyncio.sleep(120) # Check every 2 minutes
-        idle_time = time.time() - LAST_ACTIVITY_TIMESTAMP
-        
-        if idle_time > IDLE_LIMIT:
-            logger.info(f"System Idle for {int(idle_time)}s. Initiating Wake-Lock Ping...")
-            try:
-                async with httpx.AsyncClient() as client:
-                    # We ping the root URL to trigger the server
-                    response = await client.get(APP_URL, timeout=10.0)
-                    logger.info(f"Wake-Lock Success: Status {response.status_code}")
-            except Exception as e:
-                logger.error(f"Wake-Lock Failed: {e}")
-
-@app.on_event("startup")
-async def on_startup():
-    # Launches the background heartbeat
-    asyncio.create_task(self_ping_loop())
-
-# ==========================================
-# 🧠 SWARM INTELLIGENCE CORE
-# ==========================================
-
+# --- ULTIMATE GLOBAL REGION MAP (67+ Countries) ---
 REGION_MAP = {
     "Global": "wt-wt", "Argentina": "ar-es", "Australia": "au-en", "Austria": "at-de",
     "Belgium (FR)": "be-fr", "Belgium (NL)": "be-nl", "Brazil": "br-pt", "Bulgaria": "bg-bg",
@@ -132,110 +93,206 @@ class SearchRequest(BaseModel):
 class TrendingRequest(BaseModel):
     region: str
 
+# ==========================================
+# 🧠 SWARM INTELLIGENCE CORE (v39)
+# ==========================================
+
 class SwarmCommander:
     def __init__(self):
-        self.llm = ChatGroq(temperature=0.1, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY) if INTERNAL_API_KEY else None
+        if not INTERNAL_API_KEY:
+             self.llm = None
+        else:
+             self.llm = ChatGroq(temperature=0.0, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY)
         self.logs = []
 
-    def log_action(self, agent, message):
-        t = datetime.now().strftime("%H:%M:%S")
-        self.logs.append(f"<span style='opacity:0.6'>[{t}]</span> <b style='color:#00f3ff'>[{agent}]</b> {message}")
+    def log(self, agent, message):
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        entry = f"<span style='opacity:0.6'>[{timestamp}]</span> <b style='color:#00f3ff'>[{agent}]</b> {message}"
+        self.logs.append(entry)
 
-    def hunter_gather(self, topic, region_code, mode):
-        self.log_action("HUNTER", f"Executing search protocols for: {topic} in {region_code}")
+    def _hunter_agent(self, topic, region_code, mode):
+        self.log("HUNTER", f"Initiating multi-vector sweep for: {topic}")
+        strategies = []
+        if mode == "Fact Check": strategies = [f"{topic} verified fact check", f"is {topic} true"]
+        elif mode == "Market Analysis": strategies = [f"{topic} revenue data {datetime.now().year}", f"{topic} market report"]
+        elif mode == "Catalog": strategies = [f"list of {topic}", f"types of {topic}"]
+        else: strategies = [f"{topic} news analysis", f"{topic} details"]
+        
         vault = ""
-        try:
-            with DDGS() as ddgs:
-                # Multi-stage search strategy
-                q1 = f"{topic} news {datetime.now().year}"
-                res = list(ddgs.text(q1, region=region_code, max_results=6))
-                for r in res: vault += f"SOURCE: {r['title']}\nDATA: {r['body']}\n\n"
-        except Exception as e:
-            self.log_action("ERROR", f"Hunter failed: {str(e)}")
+        with DDGS() as ddgs:
+            for q in strategies:
+                try:
+                    time.sleep(0.2) 
+                    results = list(ddgs.text(q, region=region_code, max_results=4))
+                    for r in results: vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nDATA: {r['body']}\n\n"
+                except: pass
+
+        if len(vault) < 200:
+            try:
+                page = wikipedia.summary(topic, sentences=5)
+                vault += f"ENCYCLOPEDIA: {page}\n\n"
+            except: pass
         return vault
 
-    def vision_scan(self, topic, region_code):
-        self.log_action("VISION", "Scanning for visual intelligence assets...")
+    def _vision_agent(self, topic, region_code):
         gallery = []
         try:
             with DDGS() as ddgs:
-                res = list(ddgs.images(f"{topic} official", region=region_code, max_results=12))
-                for r in res: gallery.append({"src": r['image'], "title": r['title']})
+                results = list(ddgs.images(f"{topic} real context", region=region_code, max_results=20))
+                for r in results:
+                    if len(gallery) >= 20: break
+                    gallery.append({"src": r['image'], "title": r['title']})
         except: pass
         return gallery
 
-    def analyze_data(self, topic, context, mode):
-        self.log_action("ANALYST", "Processing data through Neural Engine...")
-        if not self.llm: return "SYSTEM OFFLINE: Groq Key Missing."
-        
-        prompt = f"""
-        Role: NewsWeave Supreme Intelligence.
-        Topic: {topic}
-        Mode: {mode}
-        Context: {context}
-        Requirement: Provide a high-density, professional intelligence dossier using HTML tags. 
-        Include sections for 'Executive Summary', 'Key Evidence', and 'Future Projections'.
-        """
-        return self.llm.invoke(prompt).content
+    def _analyst_agent(self, text):
+        try:
+            years = re.findall(r'\b(20\d{2})\b', text)
+            numbers = re.findall(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\b', text)
+            if len(years) > 1 and len(numbers) > 1:
+                clean_years, clean_nums = [], []
+                for i in range(min(len(years), len(numbers))):
+                    try:
+                        y = int(years[i])
+                        v = float(numbers[i].replace(',', ''))
+                        if 1900 < v < 2100: continue
+                        clean_years.append(y); clean_nums.append(v)
+                    except: pass
+                if clean_years:
+                    df = pd.DataFrame({"Year": clean_years, "Value": clean_nums}).sort_values(by="Year")
+                    fig = px.scatter(df, x="Year", y="Value", title="Trend Analysis", trendline="ols" if len(df)>3 else None, template="plotly_dark")
+                    fig.update_layout(xaxis=dict(dtick=1), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                    return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        except: pass
+        return None
 
-    def mission_control(self, topic, region, mode):
+    def execute_mission(self, topic, region, mode):
         self.logs = []
-        r_code = REGION_MAP.get(region, "wt-wt")
+        region_code = REGION_MAP.get(region, "wt-wt")
         
-        raw_intel = self.hunter_gather(topic, r_code, mode)
-        images = self.vision_scan(topic, r_code)
-        report = self.analyze_data(topic, raw_intel, mode)
+        context = self._hunter_agent(topic, region_code, mode)
+        images = self._vision_agent(topic, region_code)
         
-        return DISCLAIMER_HTML + report, images, self.logs
+        if not context and not images:
+             return f"{DISCLAIMER_HTML}<h3>⚠️ Mission Failed</h3><p>Data Void. Try a broader topic.</p>", [], None, self.logs
 
-commander = SwarmCommander()
-executor = ThreadPoolExecutor(max_workers=5)
-sem = asyncio.Semaphore(3)
+        prompt = f"""
+        You are NewsWeave Supreme. TOPIC: {topic} | REGION: {region}
+        CONTEXT: {context}
+        INSTRUCTIONS:
+        1. Write a structured report with HTML tags (h3, p, ul).
+        2. Use citations [1], [2].
+        3. Extract numbers for analysis.
+        """
+        try: report = self.llm.invoke(prompt).content if self.llm else "LLM Offline."
+        except Exception as e: report = str(e)
+
+        final_report = DISCLAIMER_HTML + report
+        chart = self._analyst_agent(final_report)
+        
+        return final_report, images, chart, self.logs
+
+agent = SwarmCommander()
 
 # ==========================================
-# 🛣️ API ENDPOINTS
+# ⚡ OPTIMIZED IMAGE ENGINE (Anti-Lag)
 # ==========================================
+
+# Semaphore: Limits to 3 concurrent requests to prevent blocking
+semaphore = asyncio.Semaphore(3)
+executor = ThreadPoolExecutor(max_workers=4)
+
+async def safe_fetch_image(title):
+    """
+    Fetches ONE high-accuracy image for a trending topic.
+    Uses Semaphore to prevent 429 Errors (The Lag Killer).
+    """
+    async with semaphore:
+        loop = asyncio.get_event_loop()
+        def search():
+            try:
+                with DDGS() as ddgs:
+                    # 'max_results=1' makes it extremely fast
+                    imgs = list(ddgs.images(f"{title} news photo", max_results=1))
+                    return imgs[0]['image'] if imgs else None
+            except:
+                return None
+        
+        # Offload to thread to keep server responsive
+        return await loop.run_in_executor(executor, search)
 
 @app.get("/")
-async def index(request: Request):
-    update_user_activity() # Human interaction detected
+async def serve_interface(request: Request):
     stats = load_stats()
-    return templates.TemplateResponse("index.html", {
-        "request": request, 
-        "regions": REGION_MAP, 
-        "total_likes": stats["total_likes"]
-    })
-
-@app.post("/analyze")
-async def analyze(request: SearchRequest):
-    update_user_activity() # Human interaction detected
-    report, imgs, logs = commander.mission_control(request.topic, request.region, request.mode)
-    return JSONResponse({"report": report, "images": imgs, "logs": logs})
-
-@app.post("/trending")
-async def trending(request: TrendingRequest):
-    update_user_activity() # Human interaction detected
-    # (Trending Logic Restored to Full Strength)
-    region_code = REGION_MAP.get(request.region, "wt-wt")
-    headlines = []
-    try:
-        with DDGS() as ddgs:
-            news_items = list(ddgs.news("top headlines", region=region_code, max_results=8))
-            for n in news_items:
-                headlines.append({
-                    "title": n['title'], "source": n['source'], "date": n['date'],
-                    "image": n.get('image') or "https://via.placeholder.com/400x200/000/00f3ff?text=Intel"
-                })
-    except: pass
-    return JSONResponse({"headlines": headlines})
+    return templates.TemplateResponse("index.html", {"request": request, "regions": REGION_MAP, "total_likes": stats["total_likes"]})
 
 @app.post("/like")
-async def like():
-    update_user_activity() # Human interaction detected
+async def like_endpoint():
     s = load_stats()
     s["total_likes"] += 1
     save_stats(s)
-    return JSONResponse({"new_count": s["total_likes"]})
+    return JSONResponse(content={"new_count": s["total_likes"]})
+
+@app.post("/trending")
+async def get_trending(request: TrendingRequest):
+    # 1. Instant Cache Return
+    cache_key = request.region
+    if cache_key in TRENDING_CACHE:
+        return JSONResponse(content={"headlines": TRENDING_CACHE[cache_key]})
+
+    region_code = REGION_MAP.get(request.region, "wt-wt")
+    headlines = []
+    
+    try:
+        # 2. Fetch Text (Fast)
+        query = "top news" if request.region == "Global" else f"top news in {request.region}"
+        
+        loop = asyncio.get_event_loop()
+        def fetch_text():
+            with DDGS() as ddgs:
+                return list(ddgs.news(query, region=region_code, max_results=8))
+        
+        results = await loop.run_in_executor(executor, fetch_text)
+        
+        # 3. Identify Missing Images
+        tasks = []
+        for r in results:
+            item = {
+                "title": r['title'],
+                "url": r['url'],
+                "source": r['source'],
+                "date": r['date'],
+                "image": r.get('image', None)
+            }
+            headlines.append(item)
+            
+            if not item['image']:
+                # Queue accurate search
+                tasks.append(safe_fetch_image(r['title']))
+            else:
+                # Queue dummy to keep index alignment
+                tasks.append(asyncio.sleep(0, result=item['image']))
+        
+        # 4. Fetch Images (Concurrent but Throttled)
+        fetched_images = await asyncio.gather(*tasks)
+        
+        # 5. Merge & Fallback
+        for i, img_url in enumerate(fetched_images):
+            if not headlines[i]['image']:
+                headlines[i]['image'] = img_url if img_url else "https://via.placeholder.com/300x150/000000/00f3ff?text=NewsWeave+Intel"
+
+        # 6. Save to Cache
+        TRENDING_CACHE[cache_key] = headlines
+
+    except Exception as e:
+        logger.error(f"Trending Error: {e}")
+    
+    return JSONResponse(content={"headlines": headlines})
+
+@app.post("/analyze")
+async def analyze_endpoint(request: SearchRequest):
+    report, images, chart, logs = agent.execute_mission(request.topic, request.region, request.mode)
+    return JSONResponse(content={"report": report, "images": images, "chart": chart, "logs": logs})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
