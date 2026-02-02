@@ -12,3 +12,5 @@ requests
 pydantic
 scikit-learn
 statsmodels
+motor
+dnspython
