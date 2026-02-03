@@ -5,9 +5,10 @@ import re
 import time
 import logging
 import asyncio
+import httpx 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, date
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -22,6 +23,7 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
+# --- CONFIGURATION ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NewsWeave-Supreme")
 
@@ -31,6 +33,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
+# --- DATABASE SETUP ---
 Base = declarative_base()
 class GlobalStats(Base):
     __tablename__ = "global_stats"
@@ -149,7 +152,6 @@ class SwarmCommander:
         try:
             years = re.findall(r'\b(20\d{2})\b', text)
             nums = re.findall(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\b', text)
-            
             clean_years, clean_nums = [], []
             if len(years) > 1 and len(nums) > 1:
                 for i in range(min(len(years), len(nums))):
@@ -157,19 +159,16 @@ class SwarmCommander:
                         y = int(years[i])
                         v = float(nums[i].replace(',', ''))
                         if 1950 < v < 2100: continue
-                        clean_years.append(y)
-                        clean_nums.append(v)
+                        clean_years.append(y); clean_nums.append(v)
                     except: pass
                 
                 if clean_years:
                     df = pd.DataFrame({"Year": clean_years, "Metric": clean_nums}).sort_values('Year')
                     df = df.groupby('Year', as_index=False).mean()
-                    
                     fig = px.area(df, x="Year", y="Metric", title=f"Trend Analysis: {datetime.now().year}", template="plotly_dark", markers=True)
                     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="#aeeeff"), autosize=True)
                     return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        except Exception as e:
-            logger.error(f"Chart Error: {e}")
+        except: pass
         return None
 
     def execute(self, topic, region, mode):
@@ -180,7 +179,6 @@ class SwarmCommander:
         You are NewsWeave Supreme v46. Produce a HIGH-LEVEL INTELLIGENCE REPORT.
         TOPIC: {topic} | REGION: {region} | MODE: {mode}
         CONTEXT: {context}
-        
         INSTRUCTIONS:
         1. Write a LONG, DETAILED report (minimum 800 words).
         2. Use the following structure strictly:
@@ -190,9 +188,8 @@ class SwarmCommander:
            - <h2>GEOPOLITICAL/MARKET IMPACT</h2>: How this affects the chosen region vs global.
            - <h2>SOURCES</h2>: List cited domains.
         3. Tone: Professional, Objective, Forensic.
-        4. Use HTML tags (h2, p, ul, li, strong) for formatting. Do not use markdown.
+        4. Use HTML tags (h2, p, ul, li, strong) for formatting.
         """
-        
         try: report = self.llm.invoke(prompt).content if self.llm else "LLM Offline."
         except Exception as e: report = f"Analysis Interrupted: {str(e)}"
 
@@ -211,6 +208,17 @@ async def index(request: Request, db: Session = Depends(get_db)):
         s = get_or_create_stats(db)
         count = s.total_likes
     return templates.TemplateResponse("index.html", {"request": request, "regions": REGION_MAP, "total_likes": count})
+
+@app.get("/proxy-image")
+async def proxy_image(url: str):
+    """Fetches external images to bypass CORS in PDF generation."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(url)
+            content_type = resp.headers.get("content-type", "image/jpeg")
+            return Response(content=resp.content, media_type=content_type)
+    except:
+        return Response(status_code=404)
 
 @app.post("/analyze")
 async def analyze(request: SearchRequest, db: Session = Depends(get_db)):
@@ -246,33 +254,27 @@ async def fetch_img(title):
 @app.post("/trending")
 async def trending(request: TrendingRequest):
     if request.region in TRENDING_CACHE: return JSONResponse({"headlines": TRENDING_CACHE[request.region]})
-    
     try:
         loop = asyncio.get_event_loop()
         def get_n():
-            reg = "wt-wt" # Default global
+            reg = "wt-wt"
             with DDGS() as d: return list(d.news(f"top news {request.region}", region=reg, max_results=8))
-        
         raw = await loop.run_in_executor(executor, get_n)
         tasks = []
         headlines = []
-        
         for r in raw:
             h = {"title": r['title'], "source": r['source'], "date": r['date'], "image": r.get('image')}
             headlines.append(h)
             if not h['image']: tasks.append(fetch_img(r['title']))
             else: tasks.append(asyncio.sleep(0, result=h['image']))
-            
         imgs = await asyncio.gather(*tasks)
         for i, url in enumerate(imgs):
             if not headlines[i]['image']:
                 t = headlines[i]['title'].lower()
-                if "tech" in t or "ai" in t: fallback = CATEGORY_IMAGES['tech']
-                elif "market" in t or "bank" in t: fallback = CATEGORY_IMAGES['finance']
-                elif "war" in t: fallback = CATEGORY_IMAGES['war']
+                if "tech" in t: fallback = CATEGORY_IMAGES['tech']
+                elif "market" in t: fallback = CATEGORY_IMAGES['finance']
                 else: fallback = CATEGORY_IMAGES['general']
                 headlines[i]['image'] = url or fallback
-        
         TRENDING_CACHE[request.region] = headlines
         return JSONResponse({"headlines": headlines})
     except:
