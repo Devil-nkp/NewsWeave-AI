@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Supreme | v40</title>
+    <title>NewsWeave Supreme | v45</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -27,7 +27,7 @@
         .fade-in { animation: fadeIn 0.8s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- HERO --- */
+        /* --- UI ELEMENTS --- */
         .landing-container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .logo-lg { font-family: var(--font-head); font-size: 6rem; font-weight: 900; letter-spacing: 5px; background: linear-gradient(180deg, #fff, #888); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 60px rgba(0, 243, 255, 0.3); margin-bottom: 20px; }
         
@@ -40,59 +40,27 @@
         .btn-start::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: var(--neon-blue); transition: 0.4s; z-index: -1; }
         .btn-start:hover::before { left: 0; }
 
-        /* --- COMMAND CENTER --- */
+        /* SEARCH AREA */
         .command-container { min-height: 100vh; width: 100%; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
         .search-wrapper { width: 100%; max-width: 1000px; position: relative; z-index: 10; }
-        
         .super-bar { display: flex; align-items: center; background: rgba(0, 0, 0, 0.9); border: 1px solid var(--neon-blue); border-radius: 50px; padding: 5px 20px; height: 75px; box-shadow: 0 0 30px rgba(0, 243, 255, 0.15); }
         .bar-select { background: black; color: white; border: 1px solid #333; padding: 5px 10px; font-family: var(--font-body); font-weight: bold; border-radius: 5px; cursor: pointer; outline: none; margin-right: 10px; }
         .search-input { flex: 1; background: transparent; border: none; color: white; font-size: 1.2rem; padding: 0 20px; font-family: var(--font-body); outline: none; }
         .submit-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--neon-blue); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: black; transition: 0.3s; }
         .submit-btn:hover { transform: scale(1.1); background: white; }
 
-        /* --- INTEL TRIGGER BUTTON --- */
-        .intel-trigger {
-            margin-top: 25px;
-            background: rgba(0, 243, 255, 0.05);
-            border: 1px solid var(--neon-blue);
-            color: var(--neon-blue);
-            padding: 12px 30px;
-            border-radius: 4px; 
-            font-family: var(--font-head);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            backdrop-filter: blur(5px);
-            width: fit-content;
-            margin-left: auto; margin-right: auto;
-            letter-spacing: 1px;
-        }
+        /* LIVE INTEL */
+        .intel-trigger { margin-top: 25px; background: rgba(0, 243, 255, 0.05); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 12px 30px; border-radius: 4px; font-family: var(--font-head); font-size: 0.9rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px); width: fit-content; margin-left: auto; margin-right: auto; letter-spacing: 1px; }
         .intel-trigger:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 30px var(--neon-blue); }
-        .pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(0, 243, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); } }
-
-        /* --- TRENDING OVERLAY --- */
-        .trending-overlay {
-            width: 100%; margin-top: 20px; background: rgba(5, 5, 10, 0.95);
-            border: 1px solid var(--neon-blue); border-radius: 10px; padding: 25px;
-            backdrop-filter: blur(20px); position: relative; animation: slideDown 0.5s ease;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        }
+        
+        /* TRENDING OVERLAY */
+        .trending-overlay { width: 100%; margin-top: 20px; background: rgba(5, 5, 10, 0.95); border: 1px solid var(--neon-blue); border-radius: 10px; padding: 25px; backdrop-filter: blur(20px); position: relative; animation: slideDown 0.5s ease; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-
         .close-trend { position: absolute; top: 10px; right: 15px; color: #888; cursor: pointer; font-size: 1.5rem; transition: 0.3s; }
         .close-trend:hover { color: var(--neon-blue); transform: rotate(90deg); }
-
         .trending-header { font-family: var(--font-head); color: var(--neon-blue); margin-bottom: 20px; font-size: 1.2rem; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        
         .trending-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-        .trend-card {
-            background: rgba(255, 255, 255, 0.02); border-radius: 5px; overflow: hidden;
-            cursor: pointer; transition: 0.3s; border: 1px solid #333; position: relative;
-        }
+        .trend-card { background: rgba(255, 255, 255, 0.02); border-radius: 5px; overflow: hidden; cursor: pointer; transition: 0.3s; border: 1px solid #333; position: relative; }
         .trend-card:hover { border-color: var(--neon-blue); transform: translateY(-5px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.15); }
         .trend-img { width: 100%; height: 140px; object-fit: cover; opacity: 0.8; transition: 0.3s; }
         .trend-card:hover .trend-img { opacity: 1; }
@@ -102,11 +70,10 @@
         .trend-action { position: absolute; top: 10px; right: 10px; background: var(--neon-blue); color: black; font-size: 0.7rem; padding: 4px 8px; font-weight: bold; opacity: 0; transition: 0.3s; font-family: var(--font-head); }
         .trend-card:hover .trend-action { opacity: 1; }
 
-        /* --- RESULTS GRID --- */
+        /* RESULTS */
         .results-grid { width: 100%; max-width: 1600px; margin-top: 40px; display: grid; grid-template-columns: 350px 1fr 350px; gap: 20px; align-items: start; }
         .panel { background: var(--glass-bg); border: var(--glass-border); border-radius: 10px; padding: 25px; backdrop-filter: blur(30px); max-height: 80vh; overflow-y: auto; }
         .panel h3 { color: var(--neon-blue); font-family: var(--font-head); margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.1rem; letter-spacing: 1px; }
-        
         .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .img-item { width: 100%; aspect-ratio: 16/9; border-radius: 4px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
         .img-item:hover { transform: scale(1.05); border-color: var(--neon-blue); }
@@ -114,27 +81,27 @@
         
         .report-content { font-size: 1.1rem; line-height: 1.8; color: #ddd; }
         .report-content h3 { color: white; margin-top: 25px; border-bottom: none; font-family: var(--font-head); color: var(--neon-blue); }
-        .report-content a { color: var(--neon-blue); text-decoration: none; border-bottom: 1px dotted var(--neon-blue); }
         
         .logs-box { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #00f3ff; line-height: 1.4; opacity: 0.9; }
         .log-entry { margin-bottom: 6px; border-left: 2px solid var(--neon-purple); padding-left: 8px; }
 
-        /* LIKE BUTTON & PDF */
+        /* ACTIONS */
         .action-section { text-align: center; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
         .btn-action { background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-head); }
         .btn-action:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 20px var(--neon-blue); }
         .btn-action.like-btn { border-color: #ff6b6b; color: #ff6b6b; }
         .btn-action.like-btn:hover { background: #ff6b6b; color: white; box-shadow: 0 0 20px #ff6b6b; }
 
-        /* MODAL */
-        .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        .fs-modal img { max-width: 90%; max-height: 90%; border: 2px solid var(--neon-blue); box-shadow: 0 0 50px var(--neon-blue); }
-
-        /* PDF CLEAN PRINT STYLE */
+        /* PDF MODE (WHITE) */
         .pdf-mode { background: white !important; color: black !important; padding: 20px; }
         .pdf-mode .report-content { color: black !important; }
         .pdf-mode h3 { color: #00008b !important; }
         .pdf-mode p { color: #333 !important; }
+
+        .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
+        .fs-modal img { max-width: 90%; max-height: 90%; border: 2px solid var(--neon-blue); box-shadow: 0 0 50px var(--neon-blue); }
+
+        #loader { display: none; text-align: center; margin-top: 20px; }
 
         @media (max-width: 1200px) { .results-grid { grid-template-columns: 1fr; } .trending-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -186,7 +153,7 @@
                 <div id="trending-grid" class="trending-grid"></div>
             </div>
 
-            <div id="loader" style="display:none; text-align:center; margin-top:20px;">
+            <div id="loader">
                 <i class="fas fa-circle-notch fa-spin" style="font-size:2rem; color:var(--neon-blue);"></i>
                 <p style="margin-top:10px; color:#aaa; letter-spacing:2px; font-family:var(--font-head);">DEPLOYING AGENTS...</p>
             </div>
@@ -230,26 +197,16 @@
             document.getElementById('p2').classList.add('fade-in');
         }
 
-        // --- PDF GENERATOR ---
+        // PDF Generation
         function generatePDF(btn) {
             const element = document.getElementById('report-export-area');
-            const originalClass = element.className;
-            
-            // Apply light mode styles for readable PDF
             element.classList.add('pdf-mode');
-            
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENCRYPTING...';
             
-            const opt = {
-                margin: 0.5,
-                filename: 'NewsWeave_Dossier.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
+            const opt = { margin: 0.5, filename: 'NewsWeave_Report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+            
             html2pdf().set(opt).from(element).save().then(() => {
-                element.classList.remove('pdf-mode'); // Revert to Dark Mode
+                element.classList.remove('pdf-mode');
                 btn.innerHTML = '<i class="fas fa-file-pdf"></i> DOWNLOAD DOSSIER';
             });
         }
@@ -264,24 +221,16 @@
             document.getElementById('landing-likes').innerText = data.new_count;
         }
 
-        // --- TRENDING LOGIC ---
+        // Trending Logic
         let isTrendingOpen = false;
-
         function toggleTrending() {
             const panel = document.getElementById('trending-panel');
             isTrendingOpen = !isTrendingOpen;
-            
-            if (isTrendingOpen) {
-                panel.classList.remove('hidden');
-                fetchTrending();
-            } else {
-                panel.classList.add('hidden');
-            }
+            if (isTrendingOpen) { panel.classList.remove('hidden'); fetchTrending(); } 
+            else { panel.classList.add('hidden'); }
         }
 
-        function refreshTrendingIfOpen() {
-            if (isTrendingOpen) fetchTrending();
-        }
+        function refreshTrendingIfOpen() { if (isTrendingOpen) fetchTrending(); }
 
         async function fetchTrending() {
             const region = document.getElementById('region').value;
@@ -290,19 +239,16 @@
             grid.innerHTML = '<span style="color:#888;">Scanning global frequencies...</span>';
 
             try {
-                const res = await fetch('/trending', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ region: region })
-                });
+                const res = await fetch('/trending', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ region: region }) });
                 const data = await res.json();
                 
-                if (data.headlines && data.headlines.length > 0) {
+                if (data.headlines.length > 0) {
                     grid.innerHTML = '';
                     data.headlines.forEach(news => {
                         grid.innerHTML += `
                             <div class="trend-card" onclick="analyzeTrending('${news.title.replace(/'/g, "\\'")}')">
                                 <div class="trend-action">ANALYZE</div>
-                                <img src="${news.image}" class="trend-img" onerror="this.src='https://via.placeholder.com/400x200/000/333'">
+                                <img src="${news.image}" class="trend-img" onerror="this.src='https://via.placeholder.com/400'">
                                 <div class="trend-info">
                                     <div class="trend-title">${news.title}</div>
                                     <div class="trend-meta">${news.source} • ${news.date || 'Live'}</div>
@@ -310,18 +256,13 @@
                             </div>
                         `;
                     });
-                } else {
-                    grid.innerHTML = '<span style="color:#555;">No signals detected.</span>';
                 }
-            } catch (e) {
-                grid.innerHTML = '<span style="color:red;">Stream Offline.</span>';
-            }
+            } catch (e) { grid.innerHTML = '<span style="color:red;">Stream Offline.</span>'; }
         }
 
         function analyzeTrending(title) {
             document.getElementById('topic').value = title;
-            toggleTrending(); 
-            runScan(); 
+            toggleTrending(); runScan(); 
         }
 
         async function runScan() {
