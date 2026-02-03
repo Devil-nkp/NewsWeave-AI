@@ -2,24 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NewsWeave Supreme | v40</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root {
-            --neon-blue: #00f3ff;
-            --neon-purple: #bc13fe;
-            --glass-bg: rgba(10, 10, 15, 0.85);
-            --glass-border: 1px solid rgba(0, 243, 255, 0.2);
-            --font-head: 'Orbitron', sans-serif;
-            --font-body: 'Rajdhani', sans-serif;
-        }
+        :root { --neon-blue: #00f3ff; --neon-purple: #bc13fe; --glass-bg: rgba(10, 10, 15, 0.85); --glass-border: 1px solid rgba(0, 243, 255, 0.2); --font-head: 'Orbitron', sans-serif; --font-body: 'Rajdhani', sans-serif; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #020205; color: white; font-family: var(--font-body); overflow-x: hidden; }
-        
         #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; filter: contrast(1.2) brightness(0.8); }
         .grid-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, transparent 0%, #000 100%), repeating-linear-gradient(0deg, transparent 0, transparent 1px, rgba(0, 243, 255, 0.03) 2px); z-index: -1; pointer-events: none; }
         .hidden { display: none !important; }
@@ -84,8 +76,6 @@
         .btn-action.like-btn { border-color: #ff6b6b; color: #ff6b6b; }
         .btn-action.like-btn:hover { background: #ff6b6b; color: white; box-shadow: 0 0 20px #ff6b6b; }
 
-        /* PDF HIDDEN TEMPLATE */
-        #pdf-container { display: none; }
         .pdf-print-view { padding: 40px; background: white; color: black; font-family: 'Times New Roman', serif; }
         .pdf-print-view h1, .pdf-print-view h2 { color: #00008b; border-bottom: 2px solid #000; padding-bottom: 5px; margin-top: 20px; }
         .pdf-print-view p, .pdf-print-view li { font-size: 12pt; line-height: 1.5; color: #333; }
@@ -175,7 +165,7 @@
         </div>
     </div>
 
-    <div id="pdf-container">
+    <div id="pdf-container" style="display:none;">
         <div class="pdf-print-view">
             <h1>NEWSWEAVE INTELLIGENCE REPORT</h1>
             <p><strong>Date:</strong> <span id="pdf-date"></span></p>
@@ -219,7 +209,7 @@
                     newImg.src = proxyUrl;
                     newImg.className = "pdf-img";
                     newImg.onload = () => resolve(newImg);
-                    newImg.onerror = () => resolve(null); 
+                    newImg.onerror = () => resolve(null); // Skip broken images
                 });
             });
 
@@ -274,7 +264,7 @@
                 if (data.headlines.length > 0) {
                     grid.innerHTML = '';
                     data.headlines.forEach(news => {
-                        grid.innerHTML += `<div class="trend-card" onclick="analyzeTrending('${news.title.replace(/'/g, "\\'")}')"><div class="trend-action">ANALYZE</div><img src="${news.image}" class="trend-img" loading="lazy" onerror="this.src='https://via.placeholder.com/400'"><div class="trend-info"><div class="trend-title">${news.title}</div><div class="trend-meta">${news.source} • ${news.date || 'Live'}</div></div></div>`;
+                        grid.innerHTML += `<div class="trend-card" onclick="analyzeTrending('${news.title.replace(/'/g, "\\'")}')"><div class="trend-action">ANALYZE</div><img src="${news.image}" class="trend-img" onerror="this.src='https://via.placeholder.com/400'"><div class="trend-info"><div class="trend-title">${news.title}</div><div class="trend-meta">${news.source} • ${news.date || 'Live'}</div></div></div>`;
                     });
                 }
             } catch (e) { grid.innerHTML = '<span style="color:red;">Stream Offline.</span>'; }
@@ -293,7 +283,7 @@
                 document.getElementById('report-content').innerHTML = data.report;
                 const imgGrid = document.getElementById('img-grid');
                 imgGrid.innerHTML = '';
-                if(data.images.length) { data.images.forEach(img => { imgGrid.innerHTML += `<div class="img-item" onclick="document.getElementById('fs-img').src='${img.src}';document.getElementById('fs-modal').style.display='flex'"><img src="${img.src}" loading="lazy" onerror="this.style.display='none'"></div>`; }); } 
+                if(data.images.length) { data.images.forEach(img => { imgGrid.innerHTML += `<div class="img-item" onclick="document.getElementById('fs-img').src='${img.src}';document.getElementById('fs-modal').style.display='flex'"><img src="${img.src}" onerror="this.style.display='none'"></div>`; }); } 
                 else { imgGrid.innerHTML = '<p style="color:#555;">No visual assets.</p>'; }
                 if(data.chart) { Plotly.newPlot('chart-div', JSON.parse(data.chart), {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#aaa'}}); } 
                 else { document.getElementById('chart-div').innerHTML = ''; }
