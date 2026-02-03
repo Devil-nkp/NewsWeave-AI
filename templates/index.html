@@ -2,307 +2,305 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Supreme | v45</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NewsWeave Supreme | v46</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* --- CYBERPUNK THEME --- */
         :root {
             --neon-blue: #00f3ff;
             --neon-purple: #bc13fe;
-            --glass-bg: rgba(10, 10, 15, 0.85);
-            --glass-border: 1px solid rgba(0, 243, 255, 0.2);
+            --glass-bg: rgba(8, 8, 16, 0.9);
+            --border: 1px solid rgba(0, 243, 255, 0.3);
             --font-head: 'Orbitron', sans-serif;
             --font-body: 'Rajdhani', sans-serif;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #020205; color: white; font-family: var(--font-body); overflow-x: hidden; }
+        body { background-color: #020205; color: white; font-family: var(--font-body); overflow-x: hidden; width: 100vw; }
         
-        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; filter: contrast(1.2) brightness(0.8); }
-        .grid-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, transparent 0%, #000 100%), repeating-linear-gradient(0deg, transparent 0, transparent 1px, rgba(0, 243, 255, 0.03) 2px); z-index: -1; pointer-events: none; }
+        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.4; }
+        .grid-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 0%, #000 100%); z-index: -1; }
         .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.8s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- UI ELEMENTS --- */
-        .landing-container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .logo-lg { font-family: var(--font-head); font-size: 6rem; font-weight: 900; letter-spacing: 5px; background: linear-gradient(180deg, #fff, #888); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 60px rgba(0, 243, 255, 0.3); margin-bottom: 20px; }
         
-        .social-proof { background: rgba(0, 243, 255, 0.05); padding: 10px 30px; border-radius: 30px; border: var(--glass-border); font-size: 1rem; color: #aaa; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(10px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.1); }
-        .social-proof i { color: #ff6b6b; animation: pulse 1.5s infinite; }
-        .like-number { color: var(--neon-blue); font-weight: bold; font-size: 1.2rem; font-family: var(--font-head); }
-
-        .btn-start { margin-top: 40px; padding: 18px 60px; font-size: 1.3rem; font-family: var(--font-head); background: transparent; color: var(--neon-blue); border: 2px solid var(--neon-blue); cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.4s; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2); position: relative; overflow: hidden; }
-        .btn-start:hover { color: black; box-shadow: 0 0 50px var(--neon-blue); }
-        .btn-start::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: var(--neon-blue); transition: 0.4s; z-index: -1; }
-        .btn-start:hover::before { left: 0; }
-
-        /* SEARCH AREA */
-        .command-container { min-height: 100vh; width: 100%; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
-        .search-wrapper { width: 100%; max-width: 1000px; position: relative; z-index: 10; }
-        .super-bar { display: flex; align-items: center; background: rgba(0, 0, 0, 0.9); border: 1px solid var(--neon-blue); border-radius: 50px; padding: 5px 20px; height: 75px; box-shadow: 0 0 30px rgba(0, 243, 255, 0.15); }
-        .bar-select { background: black; color: white; border: 1px solid #333; padding: 5px 10px; font-family: var(--font-body); font-weight: bold; border-radius: 5px; cursor: pointer; outline: none; margin-right: 10px; }
-        .search-input { flex: 1; background: transparent; border: none; color: white; font-size: 1.2rem; padding: 0 20px; font-family: var(--font-body); outline: none; }
-        .submit-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--neon-blue); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: black; transition: 0.3s; }
-        .submit-btn:hover { transform: scale(1.1); background: white; }
-
-        /* LIVE INTEL */
-        .intel-trigger { margin-top: 25px; background: rgba(0, 243, 255, 0.05); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 12px 30px; border-radius: 4px; font-family: var(--font-head); font-size: 0.9rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px); width: fit-content; margin-left: auto; margin-right: auto; letter-spacing: 1px; }
-        .intel-trigger:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 30px var(--neon-blue); }
+        /* SCALABLE CONTAINER */
+        .app-container { width: 95%; max-width: 1600px; margin: 0 auto; padding: 2vh 0; display: flex; flex-direction: column; align-items: center; }
         
-        /* TRENDING OVERLAY */
-        .trending-overlay { width: 100%; margin-top: 20px; background: rgba(5, 5, 10, 0.95); border: 1px solid var(--neon-blue); border-radius: 10px; padding: 25px; backdrop-filter: blur(20px); position: relative; animation: slideDown 0.5s ease; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .close-trend { position: absolute; top: 10px; right: 15px; color: #888; cursor: pointer; font-size: 1.5rem; transition: 0.3s; }
-        .close-trend:hover { color: var(--neon-blue); transform: rotate(90deg); }
-        .trending-header { font-family: var(--font-head); color: var(--neon-blue); margin-bottom: 20px; font-size: 1.2rem; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .trending-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-        .trend-card { background: rgba(255, 255, 255, 0.02); border-radius: 5px; overflow: hidden; cursor: pointer; transition: 0.3s; border: 1px solid #333; position: relative; }
-        .trend-card:hover { border-color: var(--neon-blue); transform: translateY(-5px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.15); }
-        .trend-img { width: 100%; height: 140px; object-fit: cover; opacity: 0.8; transition: 0.3s; }
-        .trend-card:hover .trend-img { opacity: 1; }
-        .trend-info { padding: 15px; }
-        .trend-title { font-size: 0.95rem; font-weight: bold; line-height: 1.4; color: white; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .trend-meta { font-size: 0.75rem; color: var(--neon-blue); font-family: var(--font-head); letter-spacing: 1px; }
-        .trend-action { position: absolute; top: 10px; right: 10px; background: var(--neon-blue); color: black; font-size: 0.7rem; padding: 4px 8px; font-weight: bold; opacity: 0; transition: 0.3s; font-family: var(--font-head); }
-        .trend-card:hover .trend-action { opacity: 1; }
+        /* HERO */
+        .hero { text-align: center; margin-bottom: 3vh; transition: all 0.5s ease; }
+        .logo { font-family: var(--font-head); font-size: clamp(2rem, 5vw, 5rem); background: linear-gradient(180deg, #fff, #888); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 40px var(--neon-blue); }
+        .social-proof { display: inline-flex; align-items: center; gap: 10px; background: rgba(0,243,255,0.1); padding: 8px 20px; border-radius: 20px; border: var(--border); font-size: 0.9rem; margin-top: 10px; }
+        .pulse { animation: pulse 2s infinite; color: #ff6b6b; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        /* RESULTS */
-        .results-grid { width: 100%; max-width: 1600px; margin-top: 40px; display: grid; grid-template-columns: 350px 1fr 350px; gap: 20px; align-items: start; }
-        .panel { background: var(--glass-bg); border: var(--glass-border); border-radius: 10px; padding: 25px; backdrop-filter: blur(30px); max-height: 80vh; overflow-y: auto; }
-        .panel h3 { color: var(--neon-blue); font-family: var(--font-head); margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.1rem; letter-spacing: 1px; }
-        .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .img-item { width: 100%; aspect-ratio: 16/9; border-radius: 4px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
-        .img-item:hover { transform: scale(1.05); border-color: var(--neon-blue); }
-        .img-item img { width: 100%; height: 100%; object-fit: cover; }
+        /* CONTROL BAR */
+        .control-bar {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; background: var(--glass-bg);
+            padding: 15px; border-radius: 15px; border: var(--border); width: 100%; max-width: 1000px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); z-index: 10;
+        }
+        .select-group { position: relative; flex: 1; min-width: 140px; }
+        select, input {
+            width: 100%; background: #0a0a10; color: white; border: 1px solid #333;
+            padding: 12px; border-radius: 8px; font-family: var(--font-body); font-size: 1rem; outline: none;
+        }
+        input { min-width: 250px; flex: 2; }
+        .btn-scan {
+            background: var(--neon-blue); color: black; border: none; padding: 0 25px; border-radius: 8px;
+            font-family: var(--font-head); cursor: pointer; transition: 0.3s; font-weight: bold;
+        }
+        .btn-scan:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--neon-blue); }
+
+        /* LIVE INTEL BUTTON */
+        .intel-btn {
+            margin-top: 20px; background: rgba(0,0,0,0.6); border: 1px solid var(--neon-blue); color: var(--neon-blue);
+            padding: 10px 30px; border-radius: 30px; font-family: var(--font-head); cursor: pointer; transition: 0.3s;
+        }
+        .intel-btn:hover { background: var(--neon-blue); color: black; }
+
+        /* TRENDING */
+        .trending-panel {
+            width: 100%; max-width: 1200px; margin-top: 20px; background: rgba(0,0,0,0.9); border: var(--border);
+            border-radius: 12px; padding: 20px; display: none; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;
+        }
+        .trend-card { background: #111; border: 1px solid #333; border-radius: 8px; overflow: hidden; cursor: pointer; transition: 0.3s; }
+        .trend-card:hover { border-color: var(--neon-blue); }
+        .trend-img { width: 100%; height: 140px; object-fit: cover; }
+        .trend-title { padding: 10px; font-size: 0.9rem; font-weight: bold; }
+
+        /* MAIN REPORT AREA (PDF TARGET) */
+        .report-container {
+            width: 100%; margin-top: 30px; display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
+            opacity: 0; transform: translateY(20px); transition: 0.5s;
+        }
+        .report-col { background: var(--glass-bg); border: var(--border); border-radius: 12px; padding: 30px; }
         
-        .report-content { font-size: 1.1rem; line-height: 1.8; color: #ddd; }
-        .report-content h3 { color: white; margin-top: 25px; border-bottom: none; font-family: var(--font-head); color: var(--neon-blue); }
+        /* TEXT CONTENT */
+        .content-box h2 { color: var(--neon-blue); font-family: var(--font-head); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 20px; }
+        .content-box p { font-size: 1.1rem; line-height: 1.6; color: #ddd; margin-bottom: 15px; }
+        .content-box ul { padding-left: 20px; color: #ccc; }
+        .content-box li { margin-bottom: 8px; }
+
+        /* VISUAL COL */
+        .visual-col { display: flex; flex-direction: column; gap: 20px; }
+        .chart-box { background: rgba(0,0,0,0.5); border-radius: 8px; padding: 10px; min-height: 300px; border: 1px solid #333; }
         
-        .logs-box { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #00f3ff; line-height: 1.4; opacity: 0.9; }
-        .log-entry { margin-bottom: 6px; border-left: 2px solid var(--neon-purple); padding-left: 8px; }
+        /* IMAGE GRID (20+ IMAGES) */
+        .img-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px;
+            max-height: 600px; overflow-y: auto; padding-right: 5px;
+        }
+        .img-thumb { width: 100%; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid #333; transition: 0.2s; }
+        .img-thumb:hover { border-color: var(--neon-blue); transform: scale(1.1); z-index: 2; }
 
-        /* ACTIONS */
-        .action-section { text-align: center; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
-        .btn-action { background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-head); }
-        .btn-action:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 20px var(--neon-blue); }
-        .btn-action.like-btn { border-color: #ff6b6b; color: #ff6b6b; }
-        .btn-action.like-btn:hover { background: #ff6b6b; color: white; box-shadow: 0 0 20px #ff6b6b; }
+        /* ACTION BAR */
+        .action-bar { grid-column: span 2; display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .btn-act { padding: 12px 30px; border-radius: 8px; font-family: var(--font-head); cursor: pointer; background: #222; border: 1px solid #555; color: white; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-act:hover { border-color: var(--neon-blue); background: #333; }
+        .btn-act i { color: var(--neon-blue); }
 
-        /* PDF MODE (WHITE) */
-        .pdf-mode { background: white !important; color: black !important; padding: 20px; }
-        .pdf-mode .report-content { color: black !important; }
-        .pdf-mode h3 { color: #00008b !important; }
-        .pdf-mode p { color: #333 !important; }
+        /* PDF MODE */
+        .pdf-mode {
+            background: white !important; color: black !important;
+            padding: 40px !important; border: none !important;
+        }
+        .pdf-mode h2 { color: #00008b !important; border-bottom: 2px solid #000 !important; }
+        .pdf-mode p, .pdf-mode li { color: #333 !important; }
+        .pdf-mode .chart-box { border: 1px solid #ccc !important; }
 
-        .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        .fs-modal img { max-width: 90%; max-height: 90%; border: 2px solid var(--neon-blue); box-shadow: 0 0 50px var(--neon-blue); }
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        .modal img { max-width: 95%; max-height: 90%; border: 2px solid var(--neon-blue); box-shadow: 0 0 50px var(--neon-blue); }
 
-        #loader { display: none; text-align: center; margin-top: 20px; }
+        /* LOADING */
+        #loader { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; text-align: center; }
+        .spinner { width: 60px; height: 60px; border: 5px solid rgba(0,243,255,0.2); border-top: 5px solid var(--neon-blue); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 1200px) { .results-grid { grid-template-columns: 1fr; } .trending-grid { grid-template-columns: repeat(2, 1fr); } }
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .report-container { grid-template-columns: 1fr; }
+            .action-bar { grid-column: span 1; }
+            .logo { font-size: 3rem; }
+        }
     </style>
 </head>
 <body>
     <video id="video-background" autoplay muted loop playsinline><source src="/static/background.mp4" type="video/mp4"></video>
     <div class="grid-overlay"></div>
 
-    <div class="landing-container" id="p1">
-        <h1 class="logo-lg">NEWSWEAVE<br>SUPREME</h1>
-        <div class="social-proof">
-            <i class="fas fa-heart"></i>
-            <span class="like-number" id="landing-likes">{{ total_likes }}</span>
-            <span>AGENTS ACTIVE</span>
-        </div>
-        <br>
-        <button class="btn-start" onclick="navTo('p2')">INITIALIZE SYSTEM</button>
-    </div>
-
-    <div class="command-container hidden" id="p2">
-        <div class="search-wrapper">
-            <h2 style="font-family:var(--font-head); text-align:center; margin-bottom:15px; color:var(--neon-blue); letter-spacing:3px;">GLOBAL COMMAND</h2>
-            <div class="super-bar">
-                <div style="border-right:1px solid #333; padding-right:10px; margin-right:10px;">
-                    <i class="fas fa-globe" style="color:var(--neon-blue);"></i>
-                    <select id="region" class="bar-select" onchange="refreshTrendingIfOpen()">
-                        {% for region in regions %} <option value="{{ region }}">{{ region }}</option> {% endfor %}
-                    </select>
-                </div>
-                <div style="border-right:1px solid #333; padding-right:10px; margin-right:10px;">
-                    <i class="fas fa-brain" style="color:var(--neon-purple);"></i>
-                    <select id="mode" class="bar-select">
-                        <option value="Auto">Auto</option><option value="Catalog">Catalog</option><option value="Fact Check">Verify</option><option value="Deep Research">Deep</option><option value="Market Analysis">Market</option>
-                    </select>
-                </div>
-                <input type="text" id="topic" class="search-input" placeholder="Enter intelligence query...">
-                <button class="submit-btn" onclick="runScan()"><i class="fas fa-search"></i></button>
-            </div>
-
-            <div class="intel-trigger pulse" onclick="toggleTrending()">
-                <i class="fas fa-satellite-dish"></i> ACCESS LIVE INTEL
-            </div>
-
-            <div id="trending-panel" class="trending-overlay hidden">
-                <div class="close-trend" onclick="toggleTrending()">&times;</div>
-                <div class="trending-header">
-                    <i class="fas fa-bolt"></i> HOTWIRE STREAM: <span id="trend-region-label" style="color:white;">Global</span>
-                </div>
-                <div id="trending-grid" class="trending-grid"></div>
-            </div>
-
-            <div id="loader">
-                <i class="fas fa-circle-notch fa-spin" style="font-size:2rem; color:var(--neon-blue);"></i>
-                <p style="margin-top:10px; color:#aaa; letter-spacing:2px; font-family:var(--font-head);">DEPLOYING AGENTS...</p>
+    <div class="app-container">
+        <div class="hero" id="hero-sec">
+            <h1 class="logo">NEWSWEAVE<br>SUPREME</h1>
+            <div class="social-proof">
+                <i class="fas fa-heart pulse"></i> <span id="likes">{{ total_likes }}</span> Verified Reports Generated
             </div>
         </div>
 
-        <div class="results-grid hidden" id="results-area">
-            <div class="panel">
-                <h3><i class="fas fa-eye"></i> Visual Evidence</h3>
-                <div class="img-grid" id="img-grid"></div>
-                <div id="chart-div" style="margin-top:20px;"></div>
+        <div class="control-bar">
+            <div class="select-group">
+                <select id="region">
+                    {% for region in regions %} <option value="{{ region }}">{{ region }}</option> {% endfor %}
+                </select>
             </div>
-            <div class="panel" style="border-color:var(--neon-blue);">
-                <h3><i class="fas fa-file-alt"></i> Intelligence Dossier</h3>
-                
-                <div id="report-export-area">
-                    <div id="report-content" class="report-content"></div>
-                </div>
-                
-                <div class="action-section">
-                    <button class="btn-action" onclick="generatePDF(this)">
-                        <i class="fas fa-file-pdf"></i> DOWNLOAD DOSSIER
-                    </button>
-                    <button class="btn-action like-btn" onclick="sendLike(this)">
-                        <i class="far fa-heart"></i> VERIFY & LIKE
-                    </button>
-                </div>
+            <div class="select-group">
+                <select id="mode">
+                    <option value="Auto">Auto Mode</option>
+                    <option value="Deep Research">Deep Research</option>
+                    <option value="Market Analysis">Market Analysis</option>
+                    <option value="Fact Check">Forensic Check</option>
+                    <option value="Catalog">Catalog Data</option>
+                </select>
             </div>
-            <div class="panel">
-                <h3><i class="fas fa-terminal"></i> Neural Logs</h3>
-                <div class="logs-box" id="logs-container"></div>
+            <input type="text" id="topic" placeholder="Enter target topic (e.g. 'SpaceX 2026 Plans')...">
+            <button class="btn-scan" onclick="runScan()"><i class="fas fa-search"></i> SCAN</button>
+        </div>
+
+        <button class="intel-btn" onclick="toggleTrend()"><i class="fas fa-satellite-dish"></i> LIVE GLOBAL INTEL</button>
+
+        <div id="trend-panel" class="trending-panel"></div>
+
+        <div id="loader">
+            <div class="spinner"></div>
+            <h3 style="font-family: var(--font-head); letter-spacing: 2px;">DEPLOYING AGENTS...</h3>
+        </div>
+
+        <div id="full-report" class="report-container hidden">
+            <div class="report-col content-box" id="text-col">
+                </div>
+
+            <div class="report-col visual-col">
+                <div id="chart-container" class="chart-box"></div>
+                <h3 style="color:var(--neon-blue); font-family:var(--font-head); border-bottom:1px solid #333;">VISUAL EVIDENCE (25+)</h3>
+                <div id="img-grid" class="img-grid"></div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn-act" onclick="downloadPDF()"><i class="fas fa-file-pdf"></i> DOWNLOAD DOSSIER</button>
+                <button class="btn-act" onclick="likeReport(this)"><i class="far fa-thumbs-up"></i> VERIFY & LIKE</button>
             </div>
         </div>
     </div>
 
-    <div class="fs-modal" id="fs-modal" onclick="this.style.display='none'"><img id="fs-img" src=""></div>
+    <div id="modal" class="modal" onclick="this.style.display='none'"><img id="modal-img"></div>
 
     <script>
-        function navTo(id) {
-            document.getElementById('p1').classList.add('hidden');
-            document.getElementById('p2').classList.remove('hidden');
-            document.getElementById('p2').classList.add('fade-in');
+        // --- UI LOGIC ---
+        function toggleTrend() {
+            const p = document.getElementById('trend-panel');
+            if (p.style.display === 'grid') { p.style.display = 'none'; }
+            else { p.style.display = 'grid'; loadTrends(); }
         }
 
-        // PDF Generation
-        function generatePDF(btn) {
-            const element = document.getElementById('report-export-area');
-            element.classList.add('pdf-mode');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENCRYPTING...';
+        async function loadTrends() {
+            const p = document.getElementById('trend-panel');
+            p.innerHTML = '<p style="color:#888;">Scanning frequencies...</p>';
+            const reg = document.getElementById('region').value;
             
-            const opt = { margin: 0.5, filename: 'NewsWeave_Report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
-            
-            html2pdf().set(opt).from(element).save().then(() => {
-                element.classList.remove('pdf-mode');
-                btn.innerHTML = '<i class="fas fa-file-pdf"></i> DOWNLOAD DOSSIER';
-            });
-        }
-
-        async function sendLike(btn) {
-            btn.innerHTML = '<i class="fas fa-heart"></i> VERIFIED!';
-            btn.style.background = '#ff6b6b';
-            btn.style.color = 'white';
-            btn.disabled = true;
-            const res = await fetch('/like', { method: 'POST' });
-            const data = await res.json();
-            document.getElementById('landing-likes').innerText = data.new_count;
-        }
-
-        // Trending Logic
-        let isTrendingOpen = false;
-        function toggleTrending() {
-            const panel = document.getElementById('trending-panel');
-            isTrendingOpen = !isTrendingOpen;
-            if (isTrendingOpen) { panel.classList.remove('hidden'); fetchTrending(); } 
-            else { panel.classList.add('hidden'); }
-        }
-
-        function refreshTrendingIfOpen() { if (isTrendingOpen) fetchTrending(); }
-
-        async function fetchTrending() {
-            const region = document.getElementById('region').value;
-            document.getElementById('trend-region-label').innerText = region;
-            const grid = document.getElementById('trending-grid');
-            grid.innerHTML = '<span style="color:#888;">Scanning global frequencies...</span>';
-
             try {
-                const res = await fetch('/trending', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ region: region }) });
+                const res = await fetch('/trending', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({region: reg}) });
                 const data = await res.json();
-                
-                if (data.headlines.length > 0) {
-                    grid.innerHTML = '';
-                    data.headlines.forEach(news => {
-                        grid.innerHTML += `
-                            <div class="trend-card" onclick="analyzeTrending('${news.title.replace(/'/g, "\\'")}')">
-                                <div class="trend-action">ANALYZE</div>
-                                <img src="${news.image}" class="trend-img" onerror="this.src='https://via.placeholder.com/400'">
-                                <div class="trend-info">
-                                    <div class="trend-title">${news.title}</div>
-                                    <div class="trend-meta">${news.source} • ${news.date || 'Live'}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-            } catch (e) { grid.innerHTML = '<span style="color:red;">Stream Offline.</span>'; }
+                p.innerHTML = '';
+                data.headlines.forEach(h => {
+                    p.innerHTML += `
+                    <div class="trend-card" onclick="autoScan('${h.title.replace(/'/g, "\\'")}')">
+                        <img src="${h.image}" class="trend-img">
+                        <div class="trend-title">${h.title}</div>
+                    </div>`;
+                });
+            } catch(e) { p.innerHTML = 'Signal Lost.'; }
         }
 
-        function analyzeTrending(title) {
-            document.getElementById('topic').value = title;
-            toggleTrending(); runScan(); 
+        function autoScan(txt) {
+            document.getElementById('topic').value = txt;
+            document.getElementById('trend-panel').style.display = 'none';
+            runScan();
         }
 
+        // --- CORE SCAN ---
         async function runScan() {
             const topic = document.getElementById('topic').value;
             if(!topic) return alert("INPUT REQUIRED");
-            
+
+            document.getElementById('hero-sec').style.marginTop = '2vh'; // Compact mode
             document.getElementById('loader').style.display = 'block';
-            document.getElementById('results-area').classList.add('hidden');
+            const rep = document.getElementById('full-report');
+            rep.classList.add('hidden');
+            rep.style.opacity = 0;
 
             try {
                 const res = await fetch('/analyze', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ topic, region: document.getElementById('region').value, mode: document.getElementById('mode').value })
+                    body: JSON.stringify({
+                        topic: topic,
+                        region: document.getElementById('region').value,
+                        mode: document.getElementById('mode').value
+                    })
                 });
                 const data = await res.json();
-                
-                const logsDiv = document.getElementById('logs-container');
-                logsDiv.innerHTML = '';
-                if(data.logs) data.logs.forEach(l => logsDiv.innerHTML += `<div class="log-entry">${l}</div>`);
 
-                document.getElementById('report-content').innerHTML = data.report;
+                // 1. Text
+                document.getElementById('text-col').innerHTML = data.report;
 
-                const imgGrid = document.getElementById('img-grid');
-                imgGrid.innerHTML = '';
-                if(data.images.length) {
+                // 2. Images (Handle 20+)
+                const ig = document.getElementById('img-grid');
+                ig.innerHTML = '';
+                if(data.images && data.images.length > 0) {
                     data.images.forEach(img => {
-                        imgGrid.innerHTML += `<div class="img-item" onclick="document.getElementById('fs-img').src='${img.src}';document.getElementById('fs-modal').style.display='flex'"><img src="${img.src}" onerror="this.style.display='none'"></div>`;
+                        ig.innerHTML += `<img src="${img.src}" class="img-thumb" onclick="viewImg('${img.src}')" title="${img.title}">`;
                     });
-                } else { imgGrid.innerHTML = '<p style="color:#555;">No visual assets.</p>'; }
+                } else { ig.innerHTML = '<p style="color:#666;">No verified imagery.</p>'; }
 
+                // 3. Chart
                 if(data.chart) {
-                    Plotly.newPlot('chart-div', JSON.parse(data.chart), {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#aaa'}});
-                } else { document.getElementById('chart-div').innerHTML = ''; }
+                    Plotly.newPlot('chart-container', JSON.parse(data.chart), {responsive: true});
+                } else {
+                    document.getElementById('chart-container').innerHTML = '<div style="display:flex;height:100%;align-items:center;justify-content:center;color:#666;">No numeric data extracted.</div>';
+                }
 
-                document.getElementById('results-area').classList.remove('hidden');
-            } catch(e) { alert("SYSTEM FAILURE"); }
+                rep.classList.remove('hidden');
+                setTimeout(() => { rep.style.opacity = 1; }, 100);
+
+            } catch(e) { alert("SCAN FAILED: " + e); }
             finally { document.getElementById('loader').style.display = 'none'; }
         }
-        
-        document.getElementById('topic').addEventListener('keypress', (e) => { if(e.key==='Enter') runScan(); });
+
+        function viewImg(src) {
+            document.getElementById('modal-img').src = src;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        // --- PDF DOWNLOADER ---
+        function downloadPDF() {
+            const element = document.getElementById('full-report');
+            const btns = document.querySelector('.action-bar');
+            
+            btns.style.display = 'none'; // Hide buttons for PDF
+            element.classList.add('pdf-mode'); // Turn white for print
+            
+            const opt = {
+                margin: 0.2,
+                filename: 'NewsWeave_Dossier_v46.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.remove('pdf-mode');
+                btns.style.display = 'flex';
+            });
+        }
+
+        async function likeReport(btn) {
+            await fetch('/like', {method:'POST'});
+            btn.innerHTML = '<i class="fas fa-check"></i> VERIFIED';
+            btn.style.color = '#00ff00';
+            btn.style.borderColor = '#00ff00';
+        }
+
+        document.getElementById('topic').addEventListener('keypress', (e)=>{if(e.key==='Enter')runScan()});
     </script>
 </body>
 </html>
