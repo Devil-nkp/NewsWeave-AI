@@ -26,17 +26,14 @@ from sqlalchemy.orm import sessionmaker, Session
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NewsWeave-Supreme")
 
-# ENVIRONMENT VARIABLES
 INTERNAL_API_KEY = os.environ.get("GROQ_API_KEY")
-DATABASE_URL = os.environ.get("DATABASE_URL") # Render provides this automatically
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Fix for Render's Postgres URL (starts with postgres://, needs postgresql://)
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# --- POSTGRESQL DATABASE SETUP ---
+# --- POSTGRES DATABASE ---
 Base = declarative_base()
-
 class GlobalStats(Base):
     __tablename__ = "global_stats"
     id = Column(Integer, primary_key=True, index=True)
@@ -45,53 +42,42 @@ class GlobalStats(Base):
     prompts_today = Column(Integer, default=0)
     last_date = Column(String, default=str(date.today()))
 
-# Create Engine
 if DATABASE_URL:
     engine = create_engine(DATABASE_URL)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    # Create Tables
     Base.metadata.create_all(bind=engine)
 else:
     engine = None
     SessionLocal = None
-    logger.warning("DATABASE_URL not found. Persistence disabled.")
 
-# Dependency to get DB session
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    if SessionLocal:
+        db = SessionLocal()
+        try: yield db
+        finally: db.close()
+    else: yield None
 
-# --- APP INIT ---
 app = FastAPI()
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# IN-MEMORY CACHE FOR TRENDING (Speed)
 TRENDING_CACHE = {} 
 
-# --- DB HELPERS ---
 def get_or_create_stats(db: Session):
+    if not db: return None
     stats = db.query(GlobalStats).first()
     if not stats:
         stats = GlobalStats(id=1, total_likes=0, total_prompts=0, prompts_today=0, last_date=str(date.today()))
         db.add(stats)
         db.commit()
-        db.refresh(stats)
-    
-    # Check date reset
     if stats.last_date != str(date.today()):
         stats.prompts_today = 0
         stats.last_date = str(date.today())
         db.commit()
-        db.refresh(stats)
-        
     return stats
 
-# --- CONSTANTS & DATA ---
+# --- CONSTANTS ---
 DISCLAIMER_HTML = """
 <div style="background: rgba(0, 243, 255, 0.05); border-left: 3px solid #00f3ff; padding: 15px; margin-bottom: 25px; border-radius: 4px; font-size: 0.9rem; color: #aeeeff; display: flex; align-items: center; gap: 12px; box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);">
     <i class="fas fa-shield-alt" style="font-size:1.2rem;"></i>
@@ -99,8 +85,9 @@ DISCLAIMER_HTML = """
 </div>
 """
 
-REGION_MAP = sorted([
-    "Global", "Argentina", "Australia", "Austria", "Belgium (FR)", "Belgium (NL)", "Brazil", "Bulgaria",
+# GLOBAL FIRST, THEN ALPHABETICAL
+REGION_MAP = ["Global"] + sorted([
+    "Argentina", "Australia", "Austria", "Belgium (FR)", "Belgium (NL)", "Brazil", "Bulgaria",
     "Canada (EN)", "Canada (FR)", "Chile", "China", "Colombia", "Croatia", "Czech Republic", "Denmark",
     "Egypt", "Estonia", "Finland", "France", "Germany", "Greece", "Hong Kong", "Hungary", "India",
     "Indonesia", "Ireland", "Israel", "Italy", "Japan", "Korea", "Latvia", "Lithuania", "Malaysia",
@@ -115,7 +102,6 @@ CATEGORY_IMAGES = {
     "finance": "https://images.unsplash.com/photo-1611974765270-ca1258634369?w=600&q=80",
     "war": "https://images.unsplash.com/photo-1557426272-fc759fdf7a8d?w=600&q=80",
     "politics": "https://images.unsplash.com/photo-1555848962-6e79363ec58f?w=600&q=80",
-    "health": "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?w=600&q=80",
     "general": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&q=80"
 }
 
@@ -127,168 +113,189 @@ class SearchRequest(BaseModel):
 class TrendingRequest(BaseModel):
     region: str
 
-# --- AGENT LOGIC ---
+# --- CORE INTELLIGENCE AGENT ---
 class SwarmCommander:
     def __init__(self):
-        self.llm = ChatGroq(temperature=0.0, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY) if INTERNAL_API_KEY else None
+        self.llm = ChatGroq(temperature=0.3, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY) if INTERNAL_API_KEY else None
 
-    def _hunter(self, topic, region):
-        reg_code = "wt-wt" # Default
-        if region == "India": reg_code = "in-en"
-        elif region == "USA": reg_code = "us-en"
-        # Add simpler mapping logic or rely on semantic search
+    def _hunter_agent(self, topic, region):
+        reg = "wt-wt"
+        if region == "India": reg = "in-en"
+        elif region == "USA": reg = "us-en"
         
         vault = ""
-        with DDGS() as ddgs:
-            try:
-                # Burst search
-                results = list(ddgs.text(f"{topic} news", region=reg_code, max_results=4))
-                for r in results: vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nDATA: {r['body']}\n\n"
-            except: pass
+        try:
+            with DDGS() as ddgs:
+                # DEEP SEARCH: Fetching 10 results for detail
+                results = list(ddgs.text(f"{topic} news analysis {datetime.now().year}", region=reg, max_results=10))
+                for r in results:
+                    vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nCONTENT: {r['body']}\n\n"
+        except: pass
         
-        if not vault:
-            try: vault = f"ENCYCLOPEDIA: {wikipedia.summary(topic, sentences=4)}"
+        if len(vault) < 500:
+            try: vault += f"WIKI-SUMMARY: {wikipedia.summary(topic, sentences=6)}"
             except: pass
             
-        return vault if vault else "No data found."
+        return vault if vault else "No specific data found via Live Search."
 
-    def _analyst(self, text):
+    def _vision_agent(self, topic, region):
+        gallery = []
         try:
+            with DDGS() as ddgs:
+                # MASSIVE SEARCH: Fetch 25 images
+                results = list(ddgs.images(f"{topic} news photo", region="wt-wt", max_results=30))
+                for r in results:
+                    if len(gallery) >= 25: break
+                    if r['image'] and r['image'].startswith('http'):
+                        gallery.append({"src": r['image'], "title": r['title']})
+        except: pass
+        return gallery
+
+    def _analyst_agent(self, text):
+        try:
+            # Enhanced Regex for Years and Currencies/Numbers
             years = re.findall(r'\b(20\d{2})\b', text)
             nums = re.findall(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\b', text)
+            
+            clean_years, clean_nums = [], []
             if len(years) > 1 and len(nums) > 1:
-                df = pd.DataFrame({"Year": years[:len(nums)], "Value": [float(n.replace(',','')) for n in nums[:len(years)]]}).sort_values('Year')
-                fig = px.bar(df, x="Year", y="Value", title="Trend Analysis", template="plotly_dark")
-                fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="#aeeeff"))
-                return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        except: pass
+                for i in range(min(len(years), len(nums))):
+                    try:
+                        y = int(years[i])
+                        v = float(nums[i].replace(',', ''))
+                        if 1950 < v < 2100: continue # Skip likely years in value column
+                        clean_years.append(y)
+                        clean_nums.append(v)
+                    except: pass
+                
+                if clean_years:
+                    df = pd.DataFrame({"Year": clean_years, "Metric": clean_nums}).sort_values('Year')
+                    # Remove duplicates for cleaner charts
+                    df = df.groupby('Year', as_index=False).mean()
+                    
+                    fig = px.area(df, x="Year", y="Metric", title=f"Trend Analysis: {datetime.now().year}", template="plotly_dark", markers=True)
+                    fig.update_layout(
+                        paper_bgcolor='rgba(0,0,0,0)', 
+                        plot_bgcolor='rgba(0,0,0,0)', 
+                        font=dict(color="#aeeeff"),
+                        autosize=True
+                    )
+                    return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        except Exception as e:
+            logger.error(f"Chart Error: {e}")
         return None
 
     def execute(self, topic, region, mode):
-        context = self._hunter(topic, region)
+        context = self._hunter_agent(topic, region)
+        images = self._vision_agent(topic, region)
         
+        # PROMPT ENGINEERED FOR LENGTH & DEPTH
         prompt = f"""
-        Act as NewsWeave Intelligence. Generate a professional executive report suitable for PDF export.
-        TOPIC: {topic} | REGION: {region}
+        You are NewsWeave Supreme v46. Produce a HIGH-LEVEL INTELLIGENCE REPORT.
+        TOPIC: {topic} | REGION: {region} | MODE: {mode}
         CONTEXT: {context}
         
-        FORMAT (HTML):
-        <div class='pdf-header'>
-            <h1>Executive Intelligence Report</h1>
-            <p class='meta'>Generated by NewsWeave AI | {datetime.now().strftime('%Y-%m-%d')}</p>
-        </div>
-        <div class='pdf-body'>
-            <h3>Executive Summary</h3>
-            <p>[Concise summary of facts]</p>
-            <h3>Key Findings</h3>
-            <ul>[Bullet points with metrics]</ul>
-            <h3>Strategic Outlook</h3>
-            <p>[Forward-looking analysis]</p>
-        </div>
+        INSTRUCTIONS:
+        1. Write a LONG, DETAILED report (approx 800+ words).
+        2. Use the following structure strictly:
+           - <h2>EXECUTIVE SUMMARY</h2>: A high-level strategic overview.
+           - <h2>KEY FINDINGS & METRICS</h2>: Bullet points with specific numbers/dates.
+           - <h2>DEEP DIVE ANALYSIS</h2>: Multi-paragraph detailed breakdown of the situation.
+           - <h2>GEOPOLITICAL/MARKET IMPACT</h2>: How this affects the chosen region vs global.
+           - <h2>SOURCES</h2>: List cited domains.
+        3. Tone: Professional, Objective, Forensic.
+        4. Use HTML tags (h2, p, ul, li, strong) for formatting.
         """
-        try: report = self.llm.invoke(prompt).content if self.llm else "AI Offline. Configure API Key."
-        except Exception as e: report = str(e)
-
-        chart = self._analyst(report)
         
-        # Images (Async fetch simulation for report context)
-        images = []
-        try:
-            with DDGS() as ddgs:
-                res = list(ddgs.images(f"{topic} news", max_results=4))
-                for r in res: images.append({"src": r['image'], "title": r['title']})
-        except: pass
+        try: report = self.llm.invoke(prompt).content if self.llm else "LLM Offline."
+        except Exception as e: report = f"Analysis Interrupted: {str(e)}"
 
-        return DISCLAIMER_HTML + report, images, chart
+        chart = self._analyst_agent(report + context)
+        
+        final_html = DISCLAIMER_HTML + report
+        return final_html, images, chart
 
 agent = SwarmCommander()
 semaphore = asyncio.Semaphore(3)
-executor = ThreadPoolExecutor(max_workers=4)
+executor = ThreadPoolExecutor(max_workers=6)
 
-# --- ROUTES ---
+# --- ENDPOINTS ---
 
 @app.get("/")
-async def serve_index(request: Request, db: Session = Depends(get_db)):
+async def index(request: Request, db: Session = Depends(get_db)):
+    count = 0
     if db:
-        stats = get_or_create_stats(db)
-        count = stats.total_likes
-    else:
-        count = 0
+        s = get_or_create_stats(db)
+        count = s.total_likes
     return templates.TemplateResponse("index.html", {"request": request, "regions": REGION_MAP, "total_likes": count})
 
 @app.post("/analyze")
 async def analyze(request: SearchRequest, db: Session = Depends(get_db)):
     if db:
-        stats = get_or_create_stats(db)
-        stats.total_prompts += 1
-        stats.prompts_today += 1
+        s = get_or_create_stats(db)
+        s.total_prompts += 1
         db.commit()
     
     report, images, chart = agent.execute(request.topic, request.region, request.mode)
-    return JSONResponse({"report": report, "images": images, "chart": chart, "logs": []})
+    return JSONResponse({"report": report, "images": images, "chart": chart})
 
 @app.post("/like")
 async def like(db: Session = Depends(get_db)):
     count = 0
     if db:
-        stats = get_or_create_stats(db)
-        stats.total_likes += 1
+        s = get_or_create_stats(db)
+        s.total_likes += 1
         db.commit()
-        db.refresh(stats)
-        count = stats.total_likes
+        db.refresh(s)
+        count = s.total_likes
     return JSONResponse({"new_count": count})
 
-# Smart Trending Image Fetcher
 async def fetch_img(title):
     async with semaphore:
         loop = asyncio.get_event_loop()
-        def search():
+        def s():
             try:
                 with DDGS() as ddgs:
-                    res = list(ddgs.images(f"{title} news", max_results=1))
-                    return res[0]['image'] if res else None
+                    r = list(ddgs.images(f"{title} news", max_results=1))
+                    return r[0]['image'] if r else None
             except: return None
-        return await loop.run_in_executor(executor, search)
+        return await loop.run_in_executor(executor, s)
 
 @app.post("/trending")
 async def trending(request: TrendingRequest):
     if request.region in TRENDING_CACHE: return JSONResponse({"headlines": TRENDING_CACHE[request.region]})
     
-    headlines = []
     try:
         loop = asyncio.get_event_loop()
-        def get_news():
-            reg = "wt-wt"
-            if request.region == "India": reg = "in-en" 
-            elif request.region == "USA": reg = "us-en"
-            
-            with DDGS() as ddgs: return list(ddgs.news(f"top news {request.region}", region=reg, max_results=8))
+        def get_n():
+            reg = "wt-wt" # Default global
+            if request.region != "Global": reg = "wt-wt" # Simplified for robustness
+            with DDGS() as d: return list(d.news(f"top news {request.region}", region=reg, max_results=8))
         
-        raw_news = await loop.run_in_executor(executor, get_news)
+        raw = await loop.run_in_executor(executor, get_n)
         tasks = []
+        headlines = []
         
-        for r in raw_news:
-            item = {"title": r['title'], "source": r['source'], "date": r['date'], "image": r.get('image')}
-            headlines.append(item)
-            if not item['image']: tasks.append(fetch_img(r['title']))
-            else: tasks.append(asyncio.sleep(0, result=item['image']))
+        for r in raw:
+            h = {"title": r['title'], "source": r['source'], "date": r['date'], "image": r.get('image')}
+            headlines.append(h)
+            if not h['image']: tasks.append(fetch_img(r['title']))
+            else: tasks.append(asyncio.sleep(0, result=h['image']))
             
         imgs = await asyncio.gather(*tasks)
         for i, url in enumerate(imgs):
-            if not headlines[i]['image']: 
-                # Category Fallback
+            if not headlines[i]['image']:
                 t = headlines[i]['title'].lower()
-                if any(x in t for x in ["tech","ai","chip"]): fallback = CATEGORY_IMAGES['tech']
-                elif any(x in t for x in ["market","bank","stock"]): fallback = CATEGORY_IMAGES['finance']
-                elif any(x in t for x in ["war","army"]): fallback = CATEGORY_IMAGES['war']
+                if "tech" in t or "ai" in t: fallback = CATEGORY_IMAGES['tech']
+                elif "market" in t or "bank" in t: fallback = CATEGORY_IMAGES['finance']
+                elif "war" in t: fallback = CATEGORY_IMAGES['war']
                 else: fallback = CATEGORY_IMAGES['general']
                 headlines[i]['image'] = url or fallback
         
         TRENDING_CACHE[request.region] = headlines
-    except Exception as e:
-        logger.error(f"Trending Error: {e}")
-        
-    return JSONResponse({"headlines": headlines})
+        return JSONResponse({"headlines": headlines})
+    except:
+        return JSONResponse({"headlines": []})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=10000)
