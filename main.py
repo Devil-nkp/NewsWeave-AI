@@ -5,7 +5,7 @@ import re
 import time
 import logging
 import asyncio
-import httpx 
+import httpx
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, date
 from fastapi import FastAPI, Request, Depends, Response
@@ -33,7 +33,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# --- DATABASE SETUP ---
+# --- DATABASE ---
 Base = declarative_base()
 class GlobalStats(Base):
     __tablename__ = "global_stats"
@@ -113,21 +113,46 @@ class SearchRequest(BaseModel):
 class TrendingRequest(BaseModel):
     region: str
 
+# --- CORE INTELLIGENCE AGENT ---
 class SwarmCommander:
     def __init__(self):
         self.llm = ChatGroq(temperature=0.3, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY) if INTERNAL_API_KEY else None
 
-    def _hunter_agent(self, topic, region):
+    def _resolve_mode(self, topic, mode):
+        """Auto-Detect Mode if User Selects 'Auto'"""
+        if mode != "Auto": return mode
+        
+        t = topic.lower()
+        if any(x in t for x in ['list', 'types', 'catalog', 'all']): return "Catalog"
+        if any(x in t for x in ['true', 'fake', 'real', 'hoax', 'fact']): return "Fact Check"
+        if any(x in t for x in ['price', 'market', 'share', 'growth', 'vs', 'compare']): return "Market Analysis"
+        return "Deep Research" # Default
+
+    def _hunter_agent(self, topic, region, mode):
         reg = "wt-wt"
         if region == "India": reg = "in-en"
         elif region == "USA": reg = "us-en"
         
+        # POLYMORPHIC SEARCH STRATEGY
+        queries = []
+        if mode == "Catalog":
+            queries = [f"list of {topic}", f"types of {topic}", f"{topic} comprehensive list"]
+        elif mode == "Fact Check":
+            queries = [f"is {topic} true", f"{topic} fact check", f"{topic} hoax debunk"]
+        elif mode == "Market Analysis":
+            queries = [f"{topic} market share {datetime.now().year}", f"{topic} revenue statistics", f"{topic} growth rate"]
+        else: # Deep Research
+            queries = [f"{topic} news analysis", f"{topic} detailed report", f"{topic} implications"]
+
         vault = ""
         try:
             with DDGS() as ddgs:
-                results = list(ddgs.text(f"{topic} news analysis {datetime.now().year}", region=reg, max_results=12))
-                for r in results:
-                    vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nCONTENT: {r['body']}\n\n"
+                for q in queries:
+                    # Fetching more results per query for depth
+                    results = list(ddgs.text(q, region=reg, max_results=5))
+                    for r in results:
+                        vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nCONTENT: {r['body']}\n\n"
+                    time.sleep(0.1) # Respectful delay
         except: pass
         
         if len(vault) < 500:
@@ -136,10 +161,11 @@ class SwarmCommander:
             
         return vault if vault else "No specific data found via Live Search."
 
-    def _vision_agent(self, topic, region):
+    def _vision_agent(self, topic):
         gallery = []
         try:
             with DDGS() as ddgs:
+                # MASSIVE SEARCH: Fetch 40 images to ensure 25 good ones
                 results = list(ddgs.images(f"{topic} news photo", region="wt-wt", max_results=40))
                 for r in results:
                     if len(gallery) >= 25: break
@@ -152,6 +178,7 @@ class SwarmCommander:
         try:
             years = re.findall(r'\b(20\d{2})\b', text)
             nums = re.findall(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\b', text)
+            
             clean_years, clean_nums = [], []
             if len(years) > 1 and len(nums) > 1:
                 for i in range(min(len(years), len(nums))):
@@ -159,47 +186,94 @@ class SwarmCommander:
                         y = int(years[i])
                         v = float(nums[i].replace(',', ''))
                         if 1950 < v < 2100: continue
-                        clean_years.append(y); clean_nums.append(v)
+                        clean_years.append(y)
+                        clean_nums.append(v)
                     except: pass
                 
                 if clean_years:
                     df = pd.DataFrame({"Year": clean_years, "Metric": clean_nums}).sort_values('Year')
                     df = df.groupby('Year', as_index=False).mean()
-                    fig = px.area(df, x="Year", y="Metric", title=f"Trend Analysis: {datetime.now().year}", template="plotly_dark", markers=True)
-                    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="#aeeeff"), autosize=True)
+                    
+                    fig = px.area(df, x="Year", y="Metric", title=f"Trend Analysis", template="plotly_dark", markers=True)
+                    fig.update_layout(
+                        paper_bgcolor='rgba(0,0,0,0)', 
+                        plot_bgcolor='rgba(0,0,0,0)', 
+                        font=dict(color="#aeeeff"),
+                        autosize=True
+                    )
                     return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        except: pass
+        except Exception as e:
+            logger.error(f"Chart Error: {e}")
         return None
 
     def execute(self, topic, region, mode):
-        context = self._hunter_agent(topic, region)
-        images = self._vision_agent(topic, region)
+        # 1. Resolve Mode
+        active_mode = self._resolve_mode(topic, mode)
         
+        # 2. Hunt
+        context = self._hunter_agent(topic, region, active_mode)
+        
+        # 3. Vision
+        images = self._vision_agent(topic)
+        
+        # 4. Synthesize (Polymorphic Prompting)
+        system_prompt = f"You are NewsWeave Supreme. MODE: {active_mode.upper()}."
+        
+        if active_mode == "Catalog":
+            structure = """
+            - <h2>COMPREHENSIVE CATALOG</h2>
+            - <h2>LIST OF ITEMS</h2> (Use <ul><li> format strictly)
+            - <h2>DETAILED SPECS/DESCRIPTIONS</h2>
+            - <h2>SOURCES</h2>
+            """
+        elif active_mode == "Fact Check":
+            structure = """
+            - <h2>VERDICT: [TRUE / FALSE / UNVERIFIED]</h2>
+            - <h2>EVIDENCE ANALYSIS</h2>
+            - <h2>ORIGIN OF CLAIM</h2>
+            - <h2>CONCLUSION</h2>
+            """
+        elif active_mode == "Market Analysis":
+            structure = """
+            - <h2>MARKET EXECUTIVE SUMMARY</h2>
+            - <h2>KEY FINANCIAL METRICS</h2> (Use bullet points with numbers)
+            - <h2>COMPETITIVE LANDSCAPE (Comparisons)</h2>
+            - <h2>FUTURE FORECAST</h2>
+            """
+        else: # Deep Research
+            structure = """
+            - <h2>EXECUTIVE SUMMARY</h2>
+            - <h2>KEY FINDINGS & METRICS</h2>
+            - <h2>DEEP DIVE ANALYSIS</h2> (Long form, multiple paragraphs)
+            - <h2>GEOPOLITICAL/MARKET IMPACT</h2>
+            - <h2>SOURCES</h2>
+            """
+
         prompt = f"""
-        You are NewsWeave Supreme v46. Produce a HIGH-LEVEL INTELLIGENCE REPORT.
-        TOPIC: {topic} | REGION: {region} | MODE: {mode}
+        {system_prompt}
+        TOPIC: {topic} | REGION: {region}
         CONTEXT: {context}
+        
         INSTRUCTIONS:
-        1. Write a LONG, DETAILED report (minimum 800 words).
-        2. Use the following structure strictly:
-           - <h2>EXECUTIVE SUMMARY</h2>: A high-level strategic overview.
-           - <h2>KEY FINDINGS & METRICS</h2>: Bullet points with specific numbers/dates.
-           - <h2>DEEP DIVE ANALYSIS</h2>: Multi-paragraph detailed breakdown.
-           - <h2>GEOPOLITICAL/MARKET IMPACT</h2>: How this affects the chosen region vs global.
-           - <h2>SOURCES</h2>: List cited domains.
-        3. Tone: Professional, Objective, Forensic.
-        4. Use HTML tags (h2, p, ul, li, strong) for formatting.
+        1. Write a LONG, ACCURATE report based ONLY on context.
+        2. Use this structure: {structure}
+        3. Use HTML tags (h2, p, ul, li, strong). NO Markdown.
         """
+        
         try: report = self.llm.invoke(prompt).content if self.llm else "LLM Offline."
         except Exception as e: report = f"Analysis Interrupted: {str(e)}"
 
+        # 5. Charting
         chart = self._analyst_agent(report + context)
+        
         final_html = DISCLAIMER_HTML + report
         return final_html, images, chart
 
 agent = SwarmCommander()
-semaphore = asyncio.Semaphore(3)
+semaphore = asyncio.Semaphore(4)
 executor = ThreadPoolExecutor(max_workers=6)
+
+# --- ENDPOINTS ---
 
 @app.get("/")
 async def index(request: Request, db: Session = Depends(get_db)):
@@ -209,14 +283,13 @@ async def index(request: Request, db: Session = Depends(get_db)):
         count = s.total_likes
     return templates.TemplateResponse("index.html", {"request": request, "regions": REGION_MAP, "total_likes": count})
 
+# PROXY IMAGE FOR PDF (Crucial for PDF fix)
 @app.get("/proxy-image")
 async def proxy_image(url: str):
-    """Fetches external images to bypass CORS in PDF generation."""
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(url)
-            content_type = resp.headers.get("content-type", "image/jpeg")
-            return Response(content=resp.content, media_type=content_type)
+            return Response(content=resp.content, media_type=resp.headers.get("content-type", "image/jpeg"))
     except:
         return Response(status_code=404)
 
@@ -226,6 +299,7 @@ async def analyze(request: SearchRequest, db: Session = Depends(get_db)):
         s = get_or_create_stats(db)
         s.total_prompts += 1
         db.commit()
+    
     report, images, chart = agent.execute(request.topic, request.region, request.mode)
     return JSONResponse({"report": report, "images": images, "chart": chart})
 
@@ -240,7 +314,7 @@ async def like(db: Session = Depends(get_db)):
         count = s.total_likes
     return JSONResponse({"new_count": count})
 
-async def fetch_img(title):
+async def fetch_img_with_timeout(title):
     async with semaphore:
         loop = asyncio.get_event_loop()
         def s():
@@ -249,32 +323,42 @@ async def fetch_img(title):
                     r = list(ddgs.images(f"{title} news", max_results=1))
                     return r[0]['image'] if r else None
             except: return None
-        return await loop.run_in_executor(executor, s)
+        
+        try:
+            return await asyncio.wait_for(loop.run_in_executor(executor, s), timeout=2.0)
+        except asyncio.TimeoutError:
+            return None
 
 @app.post("/trending")
 async def trending(request: TrendingRequest):
     if request.region in TRENDING_CACHE: return JSONResponse({"headlines": TRENDING_CACHE[request.region]})
+    
     try:
         loop = asyncio.get_event_loop()
         def get_n():
             reg = "wt-wt"
             with DDGS() as d: return list(d.news(f"top news {request.region}", region=reg, max_results=8))
+        
         raw = await loop.run_in_executor(executor, get_n)
         tasks = []
         headlines = []
+        
         for r in raw:
             h = {"title": r['title'], "source": r['source'], "date": r['date'], "image": r.get('image')}
             headlines.append(h)
-            if not h['image']: tasks.append(fetch_img(r['title']))
+            if not h['image']: tasks.append(fetch_img_with_timeout(r['title']))
             else: tasks.append(asyncio.sleep(0, result=h['image']))
+            
         imgs = await asyncio.gather(*tasks)
         for i, url in enumerate(imgs):
             if not headlines[i]['image']:
                 t = headlines[i]['title'].lower()
-                if "tech" in t: fallback = CATEGORY_IMAGES['tech']
-                elif "market" in t: fallback = CATEGORY_IMAGES['finance']
+                if "tech" in t or "ai" in t: fallback = CATEGORY_IMAGES['tech']
+                elif "market" in t or "bank" in t: fallback = CATEGORY_IMAGES['finance']
+                elif "war" in t: fallback = CATEGORY_IMAGES['war']
                 else: fallback = CATEGORY_IMAGES['general']
                 headlines[i]['image'] = url or fallback
+        
         TRENDING_CACHE[request.region] = headlines
         return JSONResponse({"headlines": headlines})
     except:
