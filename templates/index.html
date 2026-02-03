@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsWeave Supreme | v39</title>
+    <title>NewsWeave Supreme | v40</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* --- CYBERPUNK THEME (v36 Style - RESTORED) --- */
+        /* --- CYBERPUNK THEME --- */
         :root {
             --neon-blue: #00f3ff;
             --neon-purple: #bc13fe;
@@ -35,8 +36,8 @@
         .like-number { color: var(--neon-blue); font-weight: bold; font-size: 1.2rem; font-family: var(--font-head); }
 
         .btn-start { margin-top: 40px; padding: 18px 60px; font-size: 1.3rem; font-family: var(--font-head); background: transparent; color: var(--neon-blue); border: 2px solid var(--neon-blue); cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.4s; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2); position: relative; overflow: hidden; }
-        .btn-start::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: var(--neon-blue); transition: 0.4s; z-index: -1; }
         .btn-start:hover { color: black; box-shadow: 0 0 50px var(--neon-blue); }
+        .btn-start::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: var(--neon-blue); transition: 0.4s; z-index: -1; }
         .btn-start:hover::before { left: 0; }
 
         /* --- COMMAND CENTER --- */
@@ -49,7 +50,7 @@
         .submit-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--neon-blue); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: black; transition: 0.3s; }
         .submit-btn:hover { transform: scale(1.1); background: white; }
 
-        /* --- INTEL TRIGGER BUTTON (THE OLD THEME STYLE) --- */
+        /* --- INTEL TRIGGER BUTTON --- */
         .intel-trigger {
             margin-top: 25px;
             background: rgba(0, 243, 255, 0.05);
@@ -73,17 +74,11 @@
         .pulse { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(0, 243, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); } }
 
-        /* --- TRENDING OVERLAY (CYBER STYLE) --- */
+        /* --- TRENDING OVERLAY --- */
         .trending-overlay {
-            width: 100%;
-            margin-top: 20px;
-            background: rgba(5, 5, 10, 0.95);
-            border: 1px solid var(--neon-blue);
-            border-radius: 10px;
-            padding: 25px;
-            backdrop-filter: blur(20px);
-            position: relative;
-            animation: slideDown 0.5s ease;
+            width: 100%; margin-top: 20px; background: rgba(5, 5, 10, 0.95);
+            border: 1px solid var(--neon-blue); border-radius: 10px; padding: 25px;
+            backdrop-filter: blur(20px); position: relative; animation: slideDown 0.5s ease;
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
         }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
@@ -95,13 +90,8 @@
         
         .trending-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .trend-card {
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 5px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: 0.3s;
-            border: 1px solid #333;
-            position: relative;
+            background: rgba(255, 255, 255, 0.02); border-radius: 5px; overflow: hidden;
+            cursor: pointer; transition: 0.3s; border: 1px solid #333; position: relative;
         }
         .trend-card:hover { border-color: var(--neon-blue); transform: translateY(-5px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.15); }
         .trend-img { width: 100%; height: 140px; object-fit: cover; opacity: 0.8; transition: 0.3s; }
@@ -129,14 +119,22 @@
         .logs-box { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #00f3ff; line-height: 1.4; opacity: 0.9; }
         .log-entry { margin-bottom: 6px; border-left: 2px solid var(--neon-purple); padding-left: 8px; }
 
-        /* LIKE BUTTON */
-        .like-section { text-align: center; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px; }
-        .btn-like { background: rgba(0,0,0,0.5); border: 1px solid #ff6b6b; color: #ff6b6b; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-head); letter-spacing: 1px; }
-        .btn-like:hover { background: #ff6b6b; color: white; box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); }
+        /* LIKE BUTTON & PDF */
+        .action-section { text-align: center; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+        .btn-action { background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-head); }
+        .btn-action:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 20px var(--neon-blue); }
+        .btn-action.like-btn { border-color: #ff6b6b; color: #ff6b6b; }
+        .btn-action.like-btn:hover { background: #ff6b6b; color: white; box-shadow: 0 0 20px #ff6b6b; }
 
         /* MODAL */
         .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
         .fs-modal img { max-width: 90%; max-height: 90%; border: 2px solid var(--neon-blue); box-shadow: 0 0 50px var(--neon-blue); }
+
+        /* PDF CLEAN PRINT STYLE */
+        .pdf-mode { background: white !important; color: black !important; padding: 20px; }
+        .pdf-mode .report-content { color: black !important; }
+        .pdf-mode h3 { color: #00008b !important; }
+        .pdf-mode p { color: #333 !important; }
 
         @media (max-width: 1200px) { .results-grid { grid-template-columns: 1fr; } .trending-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -185,8 +183,7 @@
                 <div class="trending-header">
                     <i class="fas fa-bolt"></i> HOTWIRE STREAM: <span id="trend-region-label" style="color:white;">Global</span>
                 </div>
-                <div id="trending-grid" class="trending-grid">
-                    </div>
+                <div id="trending-grid" class="trending-grid"></div>
             </div>
 
             <div id="loader" style="display:none; text-align:center; margin-top:20px;">
@@ -203,10 +200,16 @@
             </div>
             <div class="panel" style="border-color:var(--neon-blue);">
                 <h3><i class="fas fa-file-alt"></i> Intelligence Dossier</h3>
-                <div id="report-content" class="report-content"></div>
                 
-                <div class="like-section">
-                    <button class="btn-like" onclick="sendLike(this)">
+                <div id="report-export-area">
+                    <div id="report-content" class="report-content"></div>
+                </div>
+                
+                <div class="action-section">
+                    <button class="btn-action" onclick="generatePDF(this)">
+                        <i class="fas fa-file-pdf"></i> DOWNLOAD DOSSIER
+                    </button>
+                    <button class="btn-action like-btn" onclick="sendLike(this)">
                         <i class="far fa-heart"></i> VERIFY & LIKE
                     </button>
                 </div>
@@ -225,6 +228,30 @@
             document.getElementById('p1').classList.add('hidden');
             document.getElementById('p2').classList.remove('hidden');
             document.getElementById('p2').classList.add('fade-in');
+        }
+
+        // --- PDF GENERATOR ---
+        function generatePDF(btn) {
+            const element = document.getElementById('report-export-area');
+            const originalClass = element.className;
+            
+            // Apply light mode styles for readable PDF
+            element.classList.add('pdf-mode');
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENCRYPTING...';
+            
+            const opt = {
+                margin: 0.5,
+                filename: 'NewsWeave_Dossier.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.remove('pdf-mode'); // Revert to Dark Mode
+                btn.innerHTML = '<i class="fas fa-file-pdf"></i> DOWNLOAD DOSSIER';
+            });
         }
 
         async function sendLike(btn) {
@@ -246,7 +273,7 @@
             
             if (isTrendingOpen) {
                 panel.classList.remove('hidden');
-                fetchTrending(); // Load data when opened
+                fetchTrending();
             } else {
                 panel.classList.add('hidden');
             }
@@ -284,7 +311,7 @@
                         `;
                     });
                 } else {
-                    grid.innerHTML = '<span style="color:#555;">No signals detected in this sector.</span>';
+                    grid.innerHTML = '<span style="color:#555;">No signals detected.</span>';
                 }
             } catch (e) {
                 grid.innerHTML = '<span style="color:red;">Stream Offline.</span>';
