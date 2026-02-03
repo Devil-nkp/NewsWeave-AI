@@ -5,7 +5,6 @@ import re
 import time
 import logging
 import asyncio
-import random
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, date
 from fastapi import FastAPI, Request
@@ -24,11 +23,11 @@ import plotly.utils
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("NewsWeave-Supreme")
 
-# SAFETY DISCLAIMER
+# CYBERPUNK DISCLAIMER (Injects into HTML)
 DISCLAIMER_HTML = """
-<div style="background: rgba(0, 243, 255, 0.05); border-left: 3px solid #00f3ff; padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 0.85rem; color: #aeeeff; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);">
-    <i class="fas fa-shield-alt"></i>
-    <div><strong>AI FORENSIC REPORT:</strong> Data generated autonomously. Verify critical intelligence.</div>
+<div style="background: rgba(0, 243, 255, 0.05); border-left: 3px solid #00f3ff; padding: 15px; margin-bottom: 25px; border-radius: 4px; font-size: 0.9rem; color: #aeeeff; display: flex; align-items: center; gap: 12px; box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);">
+    <i class="fas fa-shield-alt" style="font-size:1.2rem;"></i>
+    <div><strong>FORENSIC AI REPORT:</strong> Data generated autonomously. Verify critical intelligence with primary sources.</div>
 </div>
 """
 
@@ -39,21 +38,17 @@ os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# --- DATA PERSISTENCE (STATS) ---
+# --- DATA PERSISTENCE ---
 DATA_FILE = "data/stats.json"
 os.makedirs("data", exist_ok=True)
-
-# IN-MEMORY CACHE (Crucial for Speed)
 TRENDING_CACHE = {} 
 
 def load_stats():
-    # Default state if no file exists
     default = {"prompts_today": 0, "total_prompts": 0, "total_likes": 0, "date": str(date.today())}
     if not os.path.exists(DATA_FILE): return default
     try:
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
-            # Reset daily prompts but PRESERVE total_likes
             if data.get("date") != str(date.today()):
                 data["prompts_today"] = 0
                 data["date"] = str(date.today())
@@ -65,7 +60,7 @@ def save_stats(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f)
 
-# --- ULTIMATE GLOBAL REGION MAP (67+ Countries) ---
+# --- 67+ COUNTRY MAP ---
 REGION_MAP = {
     "Global": "wt-wt", "Argentina": "ar-es", "Australia": "au-en", "Austria": "at-de",
     "Belgium (FR)": "be-fr", "Belgium (NL)": "be-nl", "Brazil": "br-pt", "Bulgaria": "bg-bg",
@@ -85,6 +80,16 @@ REGION_MAP = {
     "USA": "us-en", "Vietnam": "vn-vi"
 }
 
+# --- SMART FALLBACK CATEGORIES ---
+CATEGORY_IMAGES = {
+    "tech": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80",
+    "finance": "https://images.unsplash.com/photo-1611974765270-ca1258634369?w=600&q=80",
+    "war": "https://images.unsplash.com/photo-1557426272-fc759fdf7a8d?w=600&q=80",
+    "politics": "https://images.unsplash.com/photo-1555848962-6e79363ec58f?w=600&q=80",
+    "health": "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?w=600&q=80",
+    "general": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&q=80"
+}
+
 class SearchRequest(BaseModel):
     topic: str
     region: str
@@ -94,15 +99,12 @@ class TrendingRequest(BaseModel):
     region: str
 
 # ==========================================
-# 🧠 SWARM INTELLIGENCE CORE (v39)
+# 🧠 SWARM INTELLIGENCE CORE
 # ==========================================
 
 class SwarmCommander:
     def __init__(self):
-        if not INTERNAL_API_KEY:
-             self.llm = None
-        else:
-             self.llm = ChatGroq(temperature=0.0, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY)
+        self.llm = ChatGroq(temperature=0.0, model_name="llama-3.3-70b-versatile", api_key=INTERNAL_API_KEY) if INTERNAL_API_KEY else None
         self.logs = []
 
     def log(self, agent, message):
@@ -176,13 +178,14 @@ class SwarmCommander:
         if not context and not images:
              return f"{DISCLAIMER_HTML}<h3>⚠️ Mission Failed</h3><p>Data Void. Try a broader topic.</p>", [], None, self.logs
 
+        # PDF-Optimized HTML Structure
         prompt = f"""
         You are NewsWeave Supreme. TOPIC: {topic} | REGION: {region}
         CONTEXT: {context}
         INSTRUCTIONS:
-        1. Write a structured report with HTML tags (h3, p, ul).
+        1. Write a professional report with HTML tags (h3, p, ul).
         2. Use citations [1], [2].
-        3. Extract numbers for analysis.
+        3. Structure: Executive Summary -> Key Findings -> Deep Analysis.
         """
         try: report = self.llm.invoke(prompt).content if self.llm else "LLM Offline."
         except Exception as e: report = str(e)
@@ -195,31 +198,39 @@ class SwarmCommander:
 agent = SwarmCommander()
 
 # ==========================================
-# ⚡ OPTIMIZED IMAGE ENGINE (Anti-Lag)
+# ⚡ ZERO-LAG IMAGE ENGINE
 # ==========================================
 
-# Semaphore: Limits to 3 concurrent requests to prevent blocking
+# Semaphore limits concurrent requests to 3. This solves the "Lag" issue.
 semaphore = asyncio.Semaphore(3)
 executor = ThreadPoolExecutor(max_workers=4)
 
 async def safe_fetch_image(title):
     """
-    Fetches ONE high-accuracy image for a trending topic.
-    Uses Semaphore to prevent 429 Errors (The Lag Killer).
+    Fetches image securely. Returns Category Fallback if fails.
     """
     async with semaphore:
         loop = asyncio.get_event_loop()
         def search():
             try:
                 with DDGS() as ddgs:
-                    # 'max_results=1' makes it extremely fast
-                    imgs = list(ddgs.images(f"{title} news photo", max_results=1))
+                    # Quick fetch (max 1)
+                    imgs = list(ddgs.images(f"{title} news", max_results=1))
                     return imgs[0]['image'] if imgs else None
-            except:
-                return None
+            except: return None
         
-        # Offload to thread to keep server responsive
-        return await loop.run_in_executor(executor, search)
+        img_url = await loop.run_in_executor(executor, search)
+        
+        # SMART FALLBACK
+        if not img_url:
+            t = title.lower()
+            if any(x in t for x in ['ai', 'tech', 'cyber', 'data', 'chip', 'soft']): return CATEGORY_IMAGES['tech']
+            elif any(x in t for x in ['market', 'stock', 'bank', 'econ', 'rate']): return CATEGORY_IMAGES['finance']
+            elif any(x in t for x in ['war', 'strike', 'army', 'conflict']): return CATEGORY_IMAGES['war']
+            elif any(x in t for x in ['senate', 'law', 'gov', 'trump', 'biden']): return CATEGORY_IMAGES['politics']
+            else: return CATEGORY_IMAGES['general']
+            
+        return img_url
 
 @app.get("/")
 async def serve_interface(request: Request):
@@ -235,18 +246,16 @@ async def like_endpoint():
 
 @app.post("/trending")
 async def get_trending(request: TrendingRequest):
-    # 1. Instant Cache Return
-    cache_key = request.region
-    if cache_key in TRENDING_CACHE:
-        return JSONResponse(content={"headlines": TRENDING_CACHE[cache_key]})
+    # Check Cache
+    if request.region in TRENDING_CACHE:
+        return JSONResponse(content={"headlines": TRENDING_CACHE[request.region]})
 
     region_code = REGION_MAP.get(request.region, "wt-wt")
     headlines = []
     
     try:
-        # 2. Fetch Text (Fast)
+        # 1. Fetch Text
         query = "top news" if request.region == "Global" else f"top news in {request.region}"
-        
         loop = asyncio.get_event_loop()
         def fetch_text():
             with DDGS() as ddgs:
@@ -254,35 +263,27 @@ async def get_trending(request: TrendingRequest):
         
         results = await loop.run_in_executor(executor, fetch_text)
         
-        # 3. Identify Missing Images
+        # 2. Gather Images
         tasks = []
         for r in results:
             item = {
-                "title": r['title'],
-                "url": r['url'],
-                "source": r['source'],
-                "date": r['date'],
-                "image": r.get('image', None)
+                "title": r['title'], "url": r['url'], "source": r['source'], "date": r['date'], "image": r.get('image', None)
             }
             headlines.append(item)
             
             if not item['image']:
-                # Queue accurate search
                 tasks.append(safe_fetch_image(r['title']))
             else:
-                # Queue dummy to keep index alignment
                 tasks.append(asyncio.sleep(0, result=item['image']))
         
-        # 4. Fetch Images (Concurrent but Throttled)
         fetched_images = await asyncio.gather(*tasks)
         
-        # 5. Merge & Fallback
+        # 3. Merge
         for i, img_url in enumerate(fetched_images):
             if not headlines[i]['image']:
-                headlines[i]['image'] = img_url if img_url else "https://via.placeholder.com/300x150/000000/00f3ff?text=NewsWeave+Intel"
+                headlines[i]['image'] = img_url
 
-        # 6. Save to Cache
-        TRENDING_CACHE[cache_key] = headlines
+        TRENDING_CACHE[request.region] = headlines
 
     except Exception as e:
         logger.error(f"Trending Error: {e}")
