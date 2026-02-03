@@ -2,45 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NewsWeave Supreme | v47</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsWeave Supreme | v48</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* --- CORE CYBERPUNK STYLES --- */
-        :root {
-            --neon-blue: #00f3ff;
-            --neon-purple: #bc13fe;
-            --glass-bg: rgba(10, 10, 15, 0.85);
-            --glass-border: 1px solid rgba(0, 243, 255, 0.2);
-            --font-head: 'Orbitron', sans-serif;
-            --font-body: 'Rajdhani', sans-serif;
-        }
+        :root { --neon-blue: #00f3ff; --neon-purple: #bc13fe; --glass-bg: rgba(10, 10, 15, 0.85); --glass-border: 1px solid rgba(0, 243, 255, 0.2); --font-head: 'Orbitron', sans-serif; --font-body: 'Rajdhani', sans-serif; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #020205; color: white; font-family: var(--font-body); overflow-x: hidden; }
-        
         #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; filter: contrast(1.2) brightness(0.8); }
         .grid-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, transparent 0%, #000 100%), repeating-linear-gradient(0deg, transparent 0, transparent 1px, rgba(0, 243, 255, 0.03) 2px); z-index: -1; pointer-events: none; }
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 0.8s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- LAYOUT --- */
         .landing-container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .logo-lg { font-family: var(--font-head); font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; letter-spacing: 5px; background: linear-gradient(180deg, #fff, #888); -webkit-background-clip: text; color: transparent; text-shadow: 0 0 60px rgba(0, 243, 255, 0.3); margin-bottom: 20px; }
-        
         .social-proof { background: rgba(0, 243, 255, 0.05); padding: 10px 30px; border-radius: 30px; border: var(--glass-border); font-size: 1rem; color: #aaa; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(10px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.1); }
         .social-proof i { color: #ff6b6b; animation: pulse 1.5s infinite; }
         .like-number { color: var(--neon-blue); font-weight: bold; font-size: 1.2rem; font-family: var(--font-head); }
-
         .btn-start { margin-top: 40px; padding: 18px 60px; font-size: 1.3rem; font-family: var(--font-head); background: transparent; color: var(--neon-blue); border: 2px solid var(--neon-blue); cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.4s; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2); position: relative; overflow: hidden; }
         .btn-start:hover { color: black; box-shadow: 0 0 50px var(--neon-blue); }
         .btn-start::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: var(--neon-blue); transition: 0.4s; z-index: -1; }
         .btn-start:hover::before { left: 0; }
 
-        /* COMMAND CENTER */
         .command-container { min-height: 100vh; width: 100%; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
         .search-wrapper { width: 100%; max-width: 1000px; position: relative; z-index: 10; }
         .super-bar { display: flex; align-items: center; background: rgba(0, 0, 0, 0.9); border: 1px solid var(--neon-blue); border-radius: 50px; padding: 5px 20px; height: 75px; box-shadow: 0 0 30px rgba(0, 243, 255, 0.15); flex-wrap: wrap; }
@@ -54,7 +41,6 @@
         .pulse { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(0, 243, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); } }
 
-        /* TRENDING */
         .trending-overlay { width: 100%; margin-top: 20px; background: rgba(5, 5, 10, 0.95); border: 1px solid var(--neon-blue); border-radius: 10px; padding: 25px; backdrop-filter: blur(20px); position: relative; animation: slideDown 0.5s ease; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .close-trend { position: absolute; top: 10px; right: 15px; color: #888; cursor: pointer; font-size: 1.5rem; transition: 0.3s; }
@@ -71,33 +57,27 @@
         .trend-action { position: absolute; top: 10px; right: 10px; background: var(--neon-blue); color: black; font-size: 0.7rem; padding: 4px 8px; font-weight: bold; opacity: 0; transition: 0.3s; font-family: var(--font-head); }
         .trend-card:hover .trend-action { opacity: 1; }
 
-        /* RESULTS (SCALABLE) */
         .results-grid { width: 100%; max-width: 1600px; margin-top: 40px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; align-items: start; }
         .panel { background: var(--glass-bg); border: var(--glass-border); border-radius: 10px; padding: 25px; backdrop-filter: blur(30px); max-height: 85vh; overflow-y: auto; }
         .panel h3 { color: var(--neon-blue); font-family: var(--font-head); margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.1rem; letter-spacing: 1px; }
-        
         .img-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .img-item { width: 100%; aspect-ratio: 16/9; border-radius: 4px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
         .img-item:hover { transform: scale(1.05); border-color: var(--neon-blue); }
         .img-item img { width: 100%; height: 100%; object-fit: cover; }
-        
         .report-content { font-size: 1.1rem; line-height: 1.8; color: #ddd; }
         .report-content h2 { color: var(--neon-blue); margin-top: 25px; font-size: 1.2rem; font-family: var(--font-head); border-bottom: 1px solid #333; padding-bottom: 5px; }
         .report-content p { margin-bottom: 15px; }
         .report-content ul { padding-left: 20px; color: #ccc; }
         .report-content li { margin-bottom: 8px; }
 
-        /* ACTIONS */
         .action-section { text-align: center; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
         .btn-action { background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-head); }
         .btn-action:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 20px var(--neon-blue); }
         .btn-action.like-btn { border-color: #ff6b6b; color: #ff6b6b; }
         .btn-action.like-btn:hover { background: #ff6b6b; color: white; box-shadow: 0 0 20px #ff6b6b; }
 
-        /* PDF HIDDEN TEMPLATE */
-        #pdf-template { display: none; }
         .pdf-print-view { padding: 40px; background: white; color: black; font-family: 'Times New Roman', serif; }
-        .pdf-print-view h1, .pdf-print-view h2, .pdf-print-view h3 { color: #00008b; border-bottom: 2px solid #000; padding-bottom: 5px; margin-top: 20px; }
+        .pdf-print-view h1, .pdf-print-view h2 { color: #00008b; border-bottom: 2px solid #000; padding-bottom: 5px; margin-top: 20px; }
         .pdf-print-view p, .pdf-print-view li { font-size: 12pt; line-height: 1.5; color: #333; }
         .pdf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
         .pdf-img { width: 100%; height: 150px; object-fit: cover; border: 1px solid #ccc; }
@@ -105,16 +85,8 @@
 
         .fs-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
         .fs-modal img { max-width: 95%; max-height: 95%; border: 2px solid var(--neon-blue); box-shadow: 0 0 50px var(--neon-blue); }
-
         #loader { display: none; text-align: center; margin-top: 20px; }
-
-        @media (max-width: 1000px) { 
-            .results-grid { grid-template-columns: 1fr; } 
-            .trending-grid { grid-template-columns: repeat(2, 1fr); }
-            .super-bar { flex-direction: column; height: auto; padding: 15px; border-radius: 15px; }
-            .bar-select, .search-input { width: 100%; margin: 5px 0; }
-            .submit-btn { width: 100%; border-radius: 8px; margin-top: 10px; }
-        }
+        @media (max-width: 1000px) { .results-grid { grid-template-columns: 1fr; } .trending-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
 <body>
@@ -199,14 +171,11 @@
             <p><strong>Date:</strong> <span id="pdf-date"></span></p>
             <p><strong>Topic:</strong> <span id="pdf-topic"></span></p>
             <hr>
-            
             <div id="pdf-text-content"></div>
             <div style="page-break-after: always;"></div>
-
             <h2>VISUAL EVIDENCE LEDGER</h2>
             <div id="pdf-img-grid" class="pdf-grid"></div>
             <div style="page-break-after: always;"></div>
-
             <h2>MARKET TREND ANALYSIS</h2>
             <div id="pdf-chart-container"></div>
         </div>
@@ -223,49 +192,46 @@
 
         async function generatePDF(btn) {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENCRYPTING...';
-            
-            // 1. Prepare Data
             document.getElementById('pdf-date').innerText = new Date().toLocaleDateString();
             document.getElementById('pdf-topic').innerText = document.getElementById('topic').value;
-            
-            // Clone Text
             document.getElementById('pdf-text-content').innerHTML = document.getElementById('report-content').innerHTML;
             
-            // Clone Images (Limit to 12 for PDF neatness)
             const webImgs = document.querySelectorAll('.img-item img');
             const pdfGrid = document.getElementById('pdf-img-grid');
             pdfGrid.innerHTML = '';
-            webImgs.forEach((img, i) => {
-                if(i < 12) pdfGrid.innerHTML += `<img src="${img.src}" class="pdf-img">`;
+            
+            // PROXY IMAGE LOADING FOR PDF
+            const imgPromises = Array.from(webImgs).slice(0, 12).map(async (img) => {
+                const proxyUrl = `/proxy-image?url=${encodeURIComponent(img.src)}`;
+                return new Promise((resolve) => {
+                    const newImg = new Image();
+                    newImg.crossOrigin = "Anonymous";
+                    newImg.src = proxyUrl;
+                    newImg.className = "pdf-img";
+                    newImg.onload = () => resolve(newImg);
+                    newImg.onerror = () => resolve(null); // Skip broken images
+                });
             });
 
-            // Clone Chart (Convert Plotly to Image)
+            const loadedImages = await Promise.all(imgPromises);
+            loadedImages.forEach(img => {
+                if(img) pdfGrid.appendChild(img);
+            });
+
             const chartDiv = document.getElementById('chart-div');
             const pdfChart = document.getElementById('pdf-chart-container');
             pdfChart.innerHTML = '';
-            
             try {
                 const url = await Plotly.toImage(chartDiv, {format: 'png', width: 800, height: 400});
                 pdfChart.innerHTML = `<img src="${url}" class="pdf-chart-img">`;
-            } catch(e) {
-                pdfChart.innerHTML = '<p>No numeric data available for chart.</p>';
-            }
+            } catch(e) { pdfChart.innerHTML = '<p>No data.</p>'; }
 
-            // 2. Generate
             const element = document.getElementById('pdf-container');
-            element.style.display = 'block'; // Make visible for capture
+            element.style.display = 'block'; 
             
-            const opt = {
-                margin: 0.5,
-                filename: 'NewsWeave_Forensic_Report.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
+            const opt = { margin: 0.5, filename: 'NewsWeave_Report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
             await html2pdf().set(opt).from(element).save();
-            
-            element.style.display = 'none'; // Hide again
+            element.style.display = 'none';
             btn.innerHTML = '<i class="fas fa-file-pdf"></i> DOWNLOAD DOSSIER';
         }
 
@@ -283,10 +249,8 @@
         function toggleTrending() {
             const panel = document.getElementById('trending-panel');
             isTrendingOpen = !isTrendingOpen;
-            if (isTrendingOpen) { panel.classList.remove('hidden'); fetchTrending(); } 
-            else { panel.classList.add('hidden'); }
+            if (isTrendingOpen) { panel.classList.remove('hidden'); fetchTrending(); } else { panel.classList.add('hidden'); }
         }
-
         function refreshTrendingIfOpen() { if (isTrendingOpen) fetchTrending(); }
 
         async function fetchTrending() {
@@ -294,67 +258,38 @@
             document.getElementById('trend-region-label').innerText = region;
             const grid = document.getElementById('trending-grid');
             grid.innerHTML = '<span style="color:#888;">Scanning global frequencies...</span>';
-
             try {
                 const res = await fetch('/trending', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ region: region }) });
                 const data = await res.json();
-                
                 if (data.headlines.length > 0) {
                     grid.innerHTML = '';
                     data.headlines.forEach(news => {
-                        grid.innerHTML += `
-                            <div class="trend-card" onclick="analyzeTrending('${news.title.replace(/'/g, "\\'")}')">
-                                <div class="trend-action">ANALYZE</div>
-                                <img src="${news.image}" class="trend-img" onerror="this.src='https://via.placeholder.com/400'">
-                                <div class="trend-info">
-                                    <div class="trend-title">${news.title}</div>
-                                    <div class="trend-meta">${news.source} • ${news.date || 'Live'}</div>
-                                </div>
-                            </div>
-                        `;
+                        grid.innerHTML += `<div class="trend-card" onclick="analyzeTrending('${news.title.replace(/'/g, "\\'")}')"><div class="trend-action">ANALYZE</div><img src="${news.image}" class="trend-img" onerror="this.src='https://via.placeholder.com/400'"><div class="trend-info"><div class="trend-title">${news.title}</div><div class="trend-meta">${news.source} • ${news.date || 'Live'}</div></div></div>`;
                     });
                 }
             } catch (e) { grid.innerHTML = '<span style="color:red;">Stream Offline.</span>'; }
         }
 
-        function analyzeTrending(title) {
-            document.getElementById('topic').value = title;
-            toggleTrending(); runScan(); 
-        }
+        function analyzeTrending(title) { document.getElementById('topic').value = title; toggleTrending(); runScan(); }
 
         async function runScan() {
             const topic = document.getElementById('topic').value;
             if(!topic) return alert("INPUT REQUIRED");
-            
             document.getElementById('loader').style.display = 'block';
             document.getElementById('results-area').classList.add('hidden');
-
             try {
-                const res = await fetch('/analyze', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ topic, region: document.getElementById('region').value, mode: document.getElementById('mode').value })
-                });
+                const res = await fetch('/analyze', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ topic, region: document.getElementById('region').value, mode: document.getElementById('mode').value }) });
                 const data = await res.json();
-                
                 document.getElementById('report-content').innerHTML = data.report;
-
                 const imgGrid = document.getElementById('img-grid');
                 imgGrid.innerHTML = '';
-                if(data.images.length) {
-                    data.images.forEach(img => {
-                        imgGrid.innerHTML += `<div class="img-item" onclick="document.getElementById('fs-img').src='${img.src}';document.getElementById('fs-modal').style.display='flex'"><img src="${img.src}" onerror="this.style.display='none'"></div>`;
-                    });
-                } else { imgGrid.innerHTML = '<p style="color:#555;">No visual assets.</p>'; }
-
-                if(data.chart) {
-                    Plotly.newPlot('chart-div', JSON.parse(data.chart), {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#aaa'}});
-                } else { document.getElementById('chart-div').innerHTML = ''; }
-
+                if(data.images.length) { data.images.forEach(img => { imgGrid.innerHTML += `<div class="img-item" onclick="document.getElementById('fs-img').src='${img.src}';document.getElementById('fs-modal').style.display='flex'"><img src="${img.src}" onerror="this.style.display='none'"></div>`; }); } 
+                else { imgGrid.innerHTML = '<p style="color:#555;">No visual assets.</p>'; }
+                if(data.chart) { Plotly.newPlot('chart-div', JSON.parse(data.chart), {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{color:'#aaa'}}); } 
+                else { document.getElementById('chart-div').innerHTML = ''; }
                 document.getElementById('results-area').classList.remove('hidden');
-            } catch(e) { alert("SYSTEM FAILURE"); }
-            finally { document.getElementById('loader').style.display = 'none'; }
+            } catch(e) { alert("SYSTEM FAILURE"); } finally { document.getElementById('loader').style.display = 'none'; }
         }
-        
         document.getElementById('topic').addEventListener('keypress', (e) => { if(e.key==='Enter') runScan(); });
     </script>
 </body>
