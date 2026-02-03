@@ -5,7 +5,7 @@ import re
 import time
 import logging
 import asyncio
-import httpx
+import httpx 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, date
 from fastapi import FastAPI, Request, Depends, Response
@@ -33,7 +33,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# --- DATABASE ---
+# --- DATABASE SETUP ---
 Base = declarative_base()
 class GlobalStats(Base):
     __tablename__ = "global_stats"
@@ -85,7 +85,6 @@ DISCLAIMER_HTML = """
 </div>
 """
 
-# GLOBAL FIRST
 REGION_MAP = ["Global"] + sorted([
     "Argentina", "Australia", "Austria", "Belgium (FR)", "Belgium (NL)", "Brazil", "Bulgaria",
     "Canada (EN)", "Canada (FR)", "Chile", "China", "Colombia", "Croatia", "Czech Republic", "Denmark",
@@ -126,8 +125,7 @@ class SwarmCommander:
         vault = ""
         try:
             with DDGS() as ddgs:
-                # 10 results for deep content
-                results = list(ddgs.text(f"{topic} news analysis {datetime.now().year}", region=reg, max_results=10))
+                results = list(ddgs.text(f"{topic} news analysis {datetime.now().year}", region=reg, max_results=12))
                 for r in results:
                     vault += f"SOURCE: {r['title']}\nLINK: {r['href']}\nCONTENT: {r['body']}\n\n"
         except: pass
@@ -136,14 +134,13 @@ class SwarmCommander:
             try: vault += f"WIKI-SUMMARY: {wikipedia.summary(topic, sentences=8)}"
             except: pass
             
-        return vault if vault else "No specific data found."
+        return vault if vault else "No specific data found via Live Search."
 
     def _vision_agent(self, topic, region):
         gallery = []
         try:
             with DDGS() as ddgs:
-                # Fetch 35 to ensure 25 valid ones
-                results = list(ddgs.images(f"{topic} news photo", region="wt-wt", max_results=35))
+                results = list(ddgs.images(f"{topic} news photo", region="wt-wt", max_results=40))
                 for r in results:
                     if len(gallery) >= 25: break
                     if r['image'] and r['image'].startswith('http'):
@@ -155,7 +152,6 @@ class SwarmCommander:
         try:
             years = re.findall(r'\b(20\d{2})\b', text)
             nums = re.findall(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\b', text)
-            
             clean_years, clean_nums = [], []
             if len(years) > 1 and len(nums) > 1:
                 for i in range(min(len(years), len(nums))):
@@ -163,15 +159,13 @@ class SwarmCommander:
                         y = int(years[i])
                         v = float(nums[i].replace(',', ''))
                         if 1950 < v < 2100: continue
-                        clean_years.append(y)
-                        clean_nums.append(v)
+                        clean_years.append(y); clean_nums.append(v)
                     except: pass
                 
                 if clean_years:
                     df = pd.DataFrame({"Year": clean_years, "Metric": clean_nums}).sort_values('Year')
                     df = df.groupby('Year', as_index=False).mean()
-                    
-                    fig = px.area(df, x="Year", y="Metric", title=f"Trend Analysis", template="plotly_dark", markers=True)
+                    fig = px.area(df, x="Year", y="Metric", title=f"Trend Analysis: {datetime.now().year}", template="plotly_dark", markers=True)
                     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="#aeeeff"), autosize=True)
                     return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         except: pass
@@ -182,22 +176,20 @@ class SwarmCommander:
         images = self._vision_agent(topic, region)
         
         prompt = f"""
-        You are NewsWeave Supreme v49. Produce a HIGH-LEVEL INTELLIGENCE REPORT.
+        You are NewsWeave Supreme v46. Produce a HIGH-LEVEL INTELLIGENCE REPORT.
         TOPIC: {topic} | REGION: {region} | MODE: {mode}
         CONTEXT: {context}
-        
         INSTRUCTIONS:
-        1. Write a LONG, DETAILED report (800+ words).
-        2. Use the following structure:
-           - <h2>EXECUTIVE SUMMARY</h2>
-           - <h2>KEY FINDINGS & METRICS</h2> (Use bullet points)
-           - <h2>DEEP DIVE ANALYSIS</h2> (Multiple paragraphs)
-           - <h2>GEOPOLITICAL/MARKET IMPACT</h2>
-           - <h2>SOURCES</h2>
+        1. Write a LONG, DETAILED report (minimum 800 words).
+        2. Use the following structure strictly:
+           - <h2>EXECUTIVE SUMMARY</h2>: A high-level strategic overview.
+           - <h2>KEY FINDINGS & METRICS</h2>: Bullet points with specific numbers/dates.
+           - <h2>DEEP DIVE ANALYSIS</h2>: Multi-paragraph detailed breakdown.
+           - <h2>GEOPOLITICAL/MARKET IMPACT</h2>: How this affects the chosen region vs global.
+           - <h2>SOURCES</h2>: List cited domains.
         3. Tone: Professional, Objective, Forensic.
-        4. Use HTML tags (h2, p, ul, li, strong). NO Markdown.
+        4. Use HTML tags (h2, p, ul, li, strong) for formatting.
         """
-        
         try: report = self.llm.invoke(prompt).content if self.llm else "LLM Offline."
         except Exception as e: report = f"Analysis Interrupted: {str(e)}"
 
@@ -206,8 +198,7 @@ class SwarmCommander:
         return final_html, images, chart
 
 agent = SwarmCommander()
-# Use 4 workers to prevent blocking the event loop
-semaphore = asyncio.Semaphore(4)
+semaphore = asyncio.Semaphore(3)
 executor = ThreadPoolExecutor(max_workers=6)
 
 @app.get("/")
@@ -218,13 +209,14 @@ async def index(request: Request, db: Session = Depends(get_db)):
         count = s.total_likes
     return templates.TemplateResponse("index.html", {"request": request, "regions": REGION_MAP, "total_likes": count})
 
-# PROXY IMAGE FOR PDF
 @app.get("/proxy-image")
 async def proxy_image(url: str):
+    """Fetches external images to bypass CORS in PDF generation."""
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(url)
-            return Response(content=resp.content, media_type=resp.headers.get("content-type", "image/jpeg"))
+            content_type = resp.headers.get("content-type", "image/jpeg")
+            return Response(content=resp.content, media_type=content_type)
     except:
         return Response(status_code=404)
 
@@ -248,8 +240,7 @@ async def like(db: Session = Depends(get_db)):
         count = s.total_likes
     return JSONResponse({"new_count": count})
 
-# FETCH WITH TIMEOUT TO PREVENT LAG
-async def fetch_img_with_timeout(title):
+async def fetch_img(title):
     async with semaphore:
         loop = asyncio.get_event_loop()
         def s():
@@ -258,43 +249,32 @@ async def fetch_img_with_timeout(title):
                     r = list(ddgs.images(f"{title} news", max_results=1))
                     return r[0]['image'] if r else None
             except: return None
-        
-        try:
-            # Enforce 2 second timeout per image
-            return await asyncio.wait_for(loop.run_in_executor(executor, s), timeout=2.0)
-        except asyncio.TimeoutError:
-            return None
+        return await loop.run_in_executor(executor, s)
 
 @app.post("/trending")
 async def trending(request: TrendingRequest):
     if request.region in TRENDING_CACHE: return JSONResponse({"headlines": TRENDING_CACHE[request.region]})
-    
     try:
         loop = asyncio.get_event_loop()
         def get_n():
-            reg = "wt-wt" # Default global
+            reg = "wt-wt"
             with DDGS() as d: return list(d.news(f"top news {request.region}", region=reg, max_results=8))
-        
         raw = await loop.run_in_executor(executor, get_n)
         tasks = []
         headlines = []
-        
         for r in raw:
             h = {"title": r['title'], "source": r['source'], "date": r['date'], "image": r.get('image')}
             headlines.append(h)
-            if not h['image']: tasks.append(fetch_img_with_timeout(r['title']))
+            if not h['image']: tasks.append(fetch_img(r['title']))
             else: tasks.append(asyncio.sleep(0, result=h['image']))
-            
         imgs = await asyncio.gather(*tasks)
         for i, url in enumerate(imgs):
             if not headlines[i]['image']:
                 t = headlines[i]['title'].lower()
-                if "tech" in t or "ai" in t: fallback = CATEGORY_IMAGES['tech']
-                elif "market" in t or "bank" in t: fallback = CATEGORY_IMAGES['finance']
-                elif "war" in t: fallback = CATEGORY_IMAGES['war']
+                if "tech" in t: fallback = CATEGORY_IMAGES['tech']
+                elif "market" in t: fallback = CATEGORY_IMAGES['finance']
                 else: fallback = CATEGORY_IMAGES['general']
                 headlines[i]['image'] = url or fallback
-        
         TRENDING_CACHE[request.region] = headlines
         return JSONResponse({"headlines": headlines})
     except:
